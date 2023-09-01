@@ -8,7 +8,7 @@
 #include <string_view>
 #include <vector>
 
-enum class activation_strategy_t { immediate_update, batch_update };
+enum class update_strategy_t { immediate_update, batch_update };
 
 struct nn_node {
 
@@ -69,9 +69,8 @@ struct neural_net {
   void reset_dEdw_and_dEdb_to_zero();
   void update_w_and_b(double learn_rate, int num_samples);
 
-  void
-  train(f_data_t &fd, f_data_t &td,
-        activation_strategy_t as = activation_strategy_t::immediate_update);
+  void train(f_data_t &fd, f_data_t &td,
+             update_strategy_t as = update_strategy_t::immediate_update);
 
   void print_parameters(std::string_view tag);
   void print_nodes(std::string_view tag);

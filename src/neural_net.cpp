@@ -206,9 +206,9 @@ void neural_net::reset_dEdw_and_dEdb_to_zero() {
   }
 }
 
-void neural_net::update_w_and_b(double learn_rate, int num_samples) {
+void neural_net::update_w_and_b(double learning_rate, int num_samples) {
 
-  double scale_fact = learn_rate / num_samples;
+  double scale_fact = learning_rate / num_samples;
 
   for (int l = 1; l < num_layers; ++l) {
     int l_idx = l - 1; // index transformation for weights (start index 0)
@@ -221,58 +221,81 @@ void neural_net::update_w_and_b(double learn_rate, int num_samples) {
   }
 }
 
-void neural_net::train(f_data_t &fd, f_data_t &td, activation_strategy_t as) {
+void neural_net::train(f_data_t &fd, f_data_t &td, update_strategy_t as) {
   // train the network using gradient descent
 
   const int itermax = 1500;
 
   // TODO: add lean_rate as argument
-  double learn_rate = 0.01;
+  double learning_rate = 0.1;
 
   // compatible number of lines for data and target values?
-  int num_lines = fd.size();
-  assert(num_lines == td.size());
-  std::cout << "num_lines = " << num_lines << std::endl;
+  int num_training_data_sets = fd.size();
+  assert(num_training_data_sets == td.size());
+  std::cout << "num_training_data_sets = " << num_training_data_sets
+            << std::endl;
 
-  double total_error{10.0};
-  int iter{0};
-  while (total_error > 0.01 && iter < itermax) {
+  switch (as) {
+  case update_strategy_t::immediate_update:
+    std::cout << "update strategy: immediate update" << std::endl;
+    break;
+  case update_strategy_t::batch_update:
+    std::cout << "update strategy: batch update" << std::endl;
+    break;
+  }
+  std::cout << std::endl;
 
-    total_error = 0.0;
+  double total_iter_error{100.0}, total_iter_error_old{100.0};
+  int iter{0}, cnt{0};
+  while (total_iter_error > 0.01 && iter < itermax) {
 
+    total_iter_error = 0.0;
     reset_dEdw_and_dEdb_to_zero();
 
+    double total_error = 0.0;
     // for each input line do the weight & bias optimization pass
-    for (int n = 0; n < num_lines; ++n) {
-
-      ++iter;
+    for (int n = 0; n < num_training_data_sets; ++n) {
 
       std::vector<double> input_vec{fd[n]};
       std::vector<double> target_output_vec{td[n]};
 
-      // std::cout << "forward pass:" << std::endl;
       double partial_error = forward_pass(input_vec, target_output_vec);
       total_error += partial_error;
-      std::cout << "iter, n: " << iter << ", " << n
-                << ", partial error: " << partial_error
-                << ", total error: " << total_error << std::endl;
-      // std::cout << "backward pass:" << std::endl;
+
       backward_pass(input_vec, target_output_vec);
 
-      if (as == activation_strategy_t::immediate_update) {
+      if (as == update_strategy_t::immediate_update) {
         // online variant: directly update after each training pair
-        update_w_and_b(learn_rate, num_lines);
+        update_w_and_b(learning_rate, num_training_data_sets);
       }
+
+      if (cnt % num_training_data_sets == 0) {
+        std::cout << "iteration over training data set: " << iter << std::endl;
+      }
+      std::cout << "  n: " << std::setw(3) << n << ", E_n: " << std::setw(9)
+                << std::setprecision(4) << partial_error
+                << ", E_total : " << std::setw(9) << std::setprecision(4)
+                << total_error << std::endl;
+
+      ++cnt;
     }
 
-    if (as == activation_strategy_t::batch_update) {
+    if (as == update_strategy_t::batch_update) {
       // offline variant: update after the full set of training samples
-      update_w_and_b(learn_rate, num_lines);
+      update_w_and_b(learning_rate, num_training_data_sets);
     }
-  }
 
-  std::cout << "+-------------------------------------------------------------+"
-            << std::endl;
+    total_iter_error = total_error;
+    if (iter > 0) {
+      std::cout << "E_total(" << iter - 1 << ")-E_total(" << iter
+                << "): " << total_error - total_iter_error_old << "\n\n";
+    } else {
+      std::cout << "\n";
+    }
+    total_iter_error_old = total_error;
+
+    ++iter;
+  }
 }
 
 void neural_net::print_parameters(std::string_view tag) {

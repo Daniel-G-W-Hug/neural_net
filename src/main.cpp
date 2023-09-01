@@ -48,12 +48,13 @@ int main(int argc, char *argv[]) {
     // nn.print_nodes("nn");
     // nn.print_weights("nn");
 
-    std::cout << "\n\nStart training cycle...\n\n";
+    std::cout << "\nStart training cycle...\n\n";
 
-    nn.train(fd, td, activation_strategy_t::immediate_update);
-    // nn.train(fd, td, activation_strategy_t::batch_update);
+    nn.train(fd, td, update_strategy_t::immediate_update);
+    // nn.train(fd, td, update_strategy_t::batch_update);
 
-    std::cout << "\n\nStop training cycle...\n\n";
+    std::cout << "Stop training cycle...\n\n\n";
+
     nn.print_nodes("nn");
     nn.print_weights("nn");
 
