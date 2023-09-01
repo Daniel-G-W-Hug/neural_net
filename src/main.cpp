@@ -19,11 +19,11 @@ int main() {
 
   try {
 
-    // std::vector net_structure = {2, 1}; // nodes per layer
+    std::vector net_structure = {2, 1}; // nodes per layer
 
     // std::vector net_structure = {2, 2, 1}; // nodes per layer
 
-    std::vector net_structure = {4, 3, 1}; // nodes per layer
+    // std::vector net_structure = {4, 3, 1}; // nodes per layer
 
     neural_net nn(net_structure, &sigmoid);
 
@@ -32,13 +32,13 @@ int main() {
     // nn.print_nodes("nn");
     // nn.print_weights("nn");
 
-    // f_data_t fd = read_training_data(
-    //     "../input/2x1_linear_classify_training_data.csv", nn.num_nodes[0]);
-    // print_data("training data", fd);
-    // f_data_t td =
-    //     read_training_data("../input/2x1_linear_classify_target_data.csv",
-    //                        nn.num_nodes[nn.num_layers - 1]);
-    // print_data("training target data", td);
+    f_data_t fd = read_training_data(
+        "../input/2x1_linear_classify_training_data.csv", nn.num_nodes[0]);
+    print_data("training data", fd);
+    f_data_t td =
+        read_training_data("../input/2x1_linear_classify_target_data.csv",
+                           nn.num_nodes[nn.num_layers - 1]);
+    print_data("training target data", td);
 
     // f_data_t fd = read_training_data("../input/2x2x1_xor_training_data.csv",
     //                                  nn.num_nodes[0]);
@@ -47,12 +47,13 @@ int main() {
     //                                  nn.num_nodes[nn.num_layers - 1]);
     // print_data("training target data", td);
 
-    f_data_t fd =
-        read_training_data("../input/iris_training_data.csv", nn.num_nodes[0]);
-    print_data("training data", fd);
-    f_data_t td = read_training_data("../input/iris_target_data.csv",
-                                     nn.num_nodes[nn.num_layers - 1]);
-    print_data("training target data", td);
+    // f_data_t fd =
+    //     read_training_data("../input/iris_training_data.csv",
+    //     nn.num_nodes[0]);
+    // print_data("training data", fd);
+    // f_data_t td = read_training_data("../input/iris_target_data.csv",
+    //                                  nn.num_nodes[nn.num_layers - 1]);
+    // print_data("training target data", td);
 
     std::cout << "\n\nStart training cycle...\n\n";
     nn.train(fd, td);

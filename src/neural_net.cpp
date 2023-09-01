@@ -61,7 +61,7 @@ neural_net::neural_net(std::vector<int> &nn_nodes, a_func_ptr_t af) {
     nodes.push_back(tmp_nodes);
   }
 
-  // create and intialize arrays for weights w and corresponding dw
+  // create and intialize arrays for weights w and corresponding dEdw
   int w_cnt{0};
   for (int l = 1; l < num_layers; ++l) {
 
@@ -76,7 +76,7 @@ neural_net::neural_net(std::vector<int> &nn_nodes, a_func_ptr_t af) {
     for (int to = 0; to < num_nodes[l]; ++to) {
 
       std::vector<double> tmp_w;
-      std::vector<double> tmp_dw;
+      std::vector<double> tmp_dEdw;
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
 
         double dval = 0.0; // dw should always start with 0.0
@@ -86,15 +86,15 @@ neural_net::neural_net(std::vector<int> &nn_nodes, a_func_ptr_t af) {
         double val = d_ran(gen);
 
         tmp_w.push_back(val);
-        tmp_dw.push_back(dval);
+        tmp_dEdw.push_back(dval);
       }
 
       tmp_weights.push_back(tmp_w);
-      tmp_dweights.push_back(tmp_dw);
+      tmp_dweights.push_back(tmp_dEdw);
       w_cnt += tmp_w.size();
     }
     w.push_back(tmp_weights);
-    dw.push_back(tmp_dweights);
+    dEdw.push_back(tmp_dweights);
   }
   total_num_weights = w_cnt; // total number of weights in network
 }
@@ -107,7 +107,7 @@ double neural_net::forward_pass(std::vector<double> &input_vec,
   // set input layer nodes to user provided values
   int l = 0; // input layer
   for (int to = 0; to < num_nodes[l]; ++to) {
-    nodes[l][to].x = input_vec[to];
+    nodes[l][to].a = input_vec[to];
   }
 
   // forward pass through network starts at layer 1
@@ -117,29 +117,28 @@ double neural_net::forward_pass(std::vector<double> &input_vec,
 
     // activate all nodes in previous layer to make output values available
     for (int from = 0; from < num_nodes[l - 1]; ++from) {
-      nodes[l - 1][from].y =
-          nodes[l - 1][from].af(nodes[l - 1][from].x, f_tag::f);
+      nodes[l - 1][from].o =
+          nodes[l - 1][from].af(nodes[l - 1][from].a, f_tag::f);
     }
 
     // calculate summed activation for all nodes incl. node bias
     for (int to = 0; to < num_nodes[l]; ++to) {
-      nodes[l][to].x = 0.0;
+      nodes[l][to].a = nodes[l][to].b;
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
-        nodes[l][to].x += w[l_idx][to][from] * nodes[l - 1][from].y;
+        nodes[l][to].a += w[l_idx][to][from] * nodes[l - 1][from].o;
       }
-      nodes[l][to].x += nodes[l][to].b;
     }
   }
 
   // activate all nodes in output layer to make output available
   l = num_layers - 1;
   for (int to = 0; to < num_nodes[l]; ++to) {
-    nodes[l][to].y = nodes[l][to].af(nodes[l][to].x, f_tag::f);
+    nodes[l][to].o = nodes[l][to].af(nodes[l][to].a, f_tag::f);
   }
 
   double partial_error;
   for (int to = 0; to < num_nodes[l]; ++to) {
-    partial_error = std::pow(nodes[l][to].y - output_target_vec[to], 2.0);
+    partial_error = std::pow(nodes[l][to].o - output_target_vec[to], 2.0);
   }
 
   // partial error E_n for the given training pair
@@ -151,20 +150,20 @@ void neural_net::backward_pass(std::vector<double> &input_vec,
   // calculate backward pass for contribution to gradient vector based on the
   // given input and target output vectors
 
-  // calculate deltas and incremental db in output layer
+  // calculate deltas in output layer
   int l = num_layers - 1;
   int l_idx = l - 1; // index transformation for weights (start index 0)
 
   for (int to = 0; to < num_nodes[l]; ++to) {
-    nodes[l][to].delta = (nodes[l][to].y - output_target_vec[to]) *
-                         nodes[l][to].af(nodes[l][to].x, f_tag::f1);
-    nodes[l][to].db += nodes[l][to].delta;
+    nodes[l][to].delta = (nodes[l][to].o - output_target_vec[to]) *
+                         nodes[l][to].af(nodes[l][to].a, f_tag::f1);
   }
 
-  // Update dw accordingly
+  // Update dEdb and dEdw accordingly
   for (int to = 0; to < num_nodes[l]; ++to) {
+    nodes[l][to].dEdb += nodes[l][to].delta;
     for (int from = 0; from < num_nodes[l - 1]; ++from) {
-      dw[l_idx][to][from] += nodes[l][to].delta * nodes[l - 1][from].y;
+      dEdw[l_idx][to][from] += nodes[l][to].delta * nodes[l - 1][from].o;
     }
   }
 
@@ -176,33 +175,30 @@ void neural_net::backward_pass(std::vector<double> &input_vec,
     for (int from = 0; from < num_nodes[l]; ++from) {
       for (int to = 0; to < num_nodes[l + 1]; ++to) {
         nodes[l][from].delta = w[l_idx + 1][to][from] * nodes[l + 1][to].delta *
-                               nodes[l][from].af(nodes[l][from].x, f_tag::f1);
+                               nodes[l][from].af(nodes[l][from].a, f_tag::f1);
       }
     }
 
-    // update db and dw
+    // Update dEdb and dEdw accordingly
     for (int to = 0; to < num_nodes[l]; ++to) {
-      nodes[l][to].db += nodes[l][to].delta;
-    }
-
-    for (int from = 0; from < num_nodes[l]; ++from) {
-      for (int to = 0; to < num_nodes[l + 1]; ++to) {
-        dw[l_idx][to][from] += w[l_idx + 1][to][from] * nodes[l + 1][to].delta;
+      nodes[l][to].dEdb += nodes[l][to].delta;
+      for (int from = 0; from < num_nodes[l - 1]; ++from) {
+        dEdw[l_idx][to][from] += nodes[l][to].delta * nodes[l - 1][from].o;
       }
     }
   }
 }
 
-void neural_net::reset_dw_and_db_to_zero() {
+void neural_net::reset_dEdw_and_dEdb_to_zero() {
   // reset all deltas for bias and weights to zero for next iteration in
   // gradient descent
 
   for (int l = 1; l < num_layers; ++l) {
     int l_idx = l - 1; // index transformation for weights (start index 0)
     for (int to = 0; to < num_nodes[l]; ++to) {
-      nodes[l][to].db = 0.0;
+      nodes[l][to].dEdb = 0.0;
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
-        dw[l_idx][to][from] = 0.0;
+        dEdw[l_idx][to][from] = 0.0;
       }
     }
   }
@@ -215,9 +211,9 @@ void neural_net::update_w_and_b(double learn_rate, int num_samples) {
   for (int l = 1; l < num_layers; ++l) {
     int l_idx = l - 1; // index transformation for weights (start index 0)
     for (int to = 0; to < num_nodes[l]; ++to) {
-      nodes[l][to].b -= scale_fact * nodes[l][to].db;
+      nodes[l][to].b -= scale_fact * nodes[l][to].dEdb;
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
-        w[l_idx][to][from] -= scale_fact * dw[l_idx][to][from];
+        w[l_idx][to][from] -= scale_fact * dEdw[l_idx][to][from];
       }
     }
   }
@@ -226,10 +222,10 @@ void neural_net::update_w_and_b(double learn_rate, int num_samples) {
 void neural_net::train(f_data_t &fd, f_data_t &td) {
   // train the network using gradient descent
 
-  const int itermax = 5000;
+  const int itermax = 1500;
 
   // TODO: add lean_rate as argument
-  double learn_rate = 0.001;
+  double learn_rate = 0.01;
 
   // compatible number of lines for data and target values?
   int num_lines = fd.size();
@@ -238,11 +234,11 @@ void neural_net::train(f_data_t &fd, f_data_t &td) {
 
   double total_error{10.0};
   int iter{0};
-  while (total_error > 0.3 && iter < itermax) {
+  while (total_error > 0.01 && iter < itermax) {
 
     total_error = 0.0;
 
-    reset_dw_and_db_to_zero();
+    reset_dEdw_and_dEdb_to_zero();
 
     // for each input line do the weight & bias optimization pass
     for (int n = 0; n < num_lines; ++n) {
@@ -310,8 +306,9 @@ void neural_net::print_nodes(std::string_view tag) {
     std::cout << std::endl;
     for (int n = 0; n < num_nodes[l]; ++n) {
       std::cout << "  n: " << n << " nodes[" << l << "][" << n
-                << "].x = " << nodes[l][n].x << ", .b = " << nodes[l][n].b
-                << ", .db = " << nodes[l][n].db << ", .y = " << nodes[l][n].y
+                << "].a = " << nodes[l][n].a << ", .b = " << nodes[l][n].b
+                << ", .dEdb = " << nodes[l][n].dEdb
+                << ", .o = " << nodes[l][n].o
                 << ", .delta = " << nodes[l][n].delta;
       // std::cout << " &af = " << (void *)nodes[l][n].af;
       std::cout << std::endl;
@@ -351,9 +348,9 @@ void neural_net::print_weights(std::string_view tag) {
     std::cout << std::endl;
     for (int to = 0; to < num_nodes[l]; ++to) {
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
-        std::cout << "    dw[" << l << "][" << to << "][" << from << "] = ";
+        std::cout << "    dEdw[" << l << "][" << to << "][" << from << "] = ";
         std::cout.precision(4);
-        std::cout << dw[l_idx][to][from] << std::endl;
+        std::cout << dEdw[l_idx][to][from] << std::endl;
       }
     }
     if (l < num_layers - 1) {

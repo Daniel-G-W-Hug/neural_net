@@ -9,18 +9,21 @@
 #include <vector>
 
 struct nn_node {
-  double x{0.0}; // input side of node
+  // training pairs are given (x_i, y_i)
+  // in each layer l=0..num_layers there are n nodes
+
+  double a{0.0}; // input side of node (=activation)
                  // either gets direct input (for input layer)
                  // or gets weighted sum of inputs of previous layer
 
-  double b{0.0};  // bias of node (not used for input layer)
-  double db{0.0}; // delta_bias (used for backpropagation)
+  double b{0.0};    // bias of node (not used for input layer)
+  double dEdb{0.0}; // delta of error function E depending on bias
+                    // (used for backpropagation)
 
-  double y{0.0}; // output side of node
-                 // gets value after applying the activation function
-                 // will store y = af(x)
+  double o{0.0}; // output side of node; gets its value after applying the
+                 // activation function o = af(sum_prev_layer(a*x) + b)
 
-  double delta{0.0}; // for backpropagation
+  double delta{0.0}; // storage for backpropagation
 
   a_func_ptr_t af{nullptr}; // ptr to activation function
 };
@@ -41,9 +44,10 @@ struct neural_net {
   using node_matrix_t = std::vector<std::vector<nn_node>>;
   using weight_matrix_t = std::vector<std::vector<std::vector<double>>>;
 
-  node_matrix_t nodes; // vector of nodes in each layer
-  weight_matrix_t w;   // weight matrix
-  weight_matrix_t dw;  // delta_w used for backpropagation
+  node_matrix_t nodes;  // vector of nodes in each layer
+  weight_matrix_t w;    // weight matrix
+  weight_matrix_t dEdw; // delta of error function E depending on weights w
+                        // (used for backpropagation)
   // indexing: w[layer][to_node in l][from_node in l-1]
   // layout optimized for scalar product in
   // sum over activations coming from nodes in previous layer:
@@ -59,7 +63,7 @@ struct neural_net {
   void backward_pass(std::vector<double> &input_vec,
                      std::vector<double> &target_vec);
 
-  void reset_dw_and_db_to_zero();
+  void reset_dEdw_and_dEdb_to_zero();
   void update_w_and_b(double learn_rate, int num_samples);
 
   void train(f_data_t &fd, f_data_t &td);
