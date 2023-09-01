@@ -8,9 +8,12 @@
 #include <string_view>
 #include <vector>
 
+enum class activation_strategy_t { immediate_update, batch_update };
+
 struct nn_node {
-  // training pairs are given (x_i, y_i)
-  // in each layer l=0..num_layers there are n nodes
+
+  // training is done by given pairs (x, y) - x and y can be vectors
+  // in each layer l=0..num_layers-1 there are num_nodes[l]
 
   double a{0.0}; // input side of node (=activation)
                  // either gets direct input (for input layer)
@@ -66,7 +69,9 @@ struct neural_net {
   void reset_dEdw_and_dEdb_to_zero();
   void update_w_and_b(double learn_rate, int num_samples);
 
-  void train(f_data_t &fd, f_data_t &td);
+  void
+  train(f_data_t &fd, f_data_t &td,
+        activation_strategy_t as = activation_strategy_t::immediate_update);
 
   void print_parameters(std::string_view tag);
   void print_nodes(std::string_view tag);

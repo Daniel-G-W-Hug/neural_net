@@ -10,6 +10,8 @@
 std::random_device rd;
 std::mt19937 gen(rd());
 
+// TODO: make random distribution a selectable meta parameter
+
 // uniform_real_distribution(from, to)
 std::uniform_real_distribution<> d_ran(-1.0, 1.0);
 
@@ -79,7 +81,7 @@ neural_net::neural_net(std::vector<int> &nn_nodes, a_func_ptr_t af) {
       std::vector<double> tmp_dEdw;
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
 
-        double dval = 0.0; // dw should always start with 0.0
+        double dval = 0.0; // dEdw is zero initialized
 
         // assign weights with fixed or random values
         // double val = 0.5;
@@ -219,7 +221,7 @@ void neural_net::update_w_and_b(double learn_rate, int num_samples) {
   }
 }
 
-void neural_net::train(f_data_t &fd, f_data_t &td) {
+void neural_net::train(f_data_t &fd, f_data_t &td, activation_strategy_t as) {
   // train the network using gradient descent
 
   const int itermax = 1500;
@@ -257,13 +259,16 @@ void neural_net::train(f_data_t &fd, f_data_t &td) {
       // std::cout << "backward pass:" << std::endl;
       backward_pass(input_vec, target_output_vec);
 
-      // online variant: directly update after each pass
-      update_w_and_b(learn_rate, num_lines);
+      if (as == activation_strategy_t::immediate_update) {
+        // online variant: directly update after each training pair
+        update_w_and_b(learn_rate, num_lines);
+      }
     }
 
-    // offline variant: update after the full set of samples
-    // (slower convergence for linear separation case)
-    // update_w_and_b(learn_rate, num_lines);
+    if (as == activation_strategy_t::batch_update) {
+      // offline variant: update after the full set of training samples
+      update_w_and_b(learn_rate, num_lines);
+    }
   }
 
   std::cout << "+-------------------------------------------------------------+"

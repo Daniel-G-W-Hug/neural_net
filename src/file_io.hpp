@@ -9,7 +9,7 @@
 
 using f_data_t = std::vector<std::vector<double>>;
 
-f_data_t read_training_data(std::string_view fname, int assert_size);
-void print_data(std::string_view tag, f_data_t &fd);
+f_data_t read_f_data(std::string_view fname, int assert_size);
+void print_f_data(std::string_view tag, f_data_t &fd);
 
 #endif // READ_DATA_HPP
