@@ -13,32 +13,34 @@
 #include <string>
 #include <vector>
 
+// TODO: export/import of trained values for w and b
+// TODO: make random distribution in neural_net.cpp a selectable meta parameter
+
 int main(int argc, char *argv[]) {
 
   try {
 
-    // TODO: chose update strategy for training as input parameter
-    // TODO: chose case names as input arguments
-    // TODO: learn_rate in nn.train must be a selectable parameter
+    if (argc != 2) {
+      std::cout << "Provide a 'case_name' as an argument, please.\n\n";
+      std::cout << "Input file names will be derived from 'case_name':\n\n";
+      std::cout << "  - 'case_name.cfg' -> config file.\n";
+      std::cout << "  - 'case_name_training_data.csv' -> training data set.\n";
+      std::cout << "  - 'case_name_target_data.csv' -> target data set.\n\n";
+      throw std::runtime_error(
+          "Failed to provide required case_name as argument.\n");
+    }
+    std::string case_name(argv[1]);
 
-    std::string fname_training, fname_target;
+    std::string f_cfg{"../input/" + case_name + ".cfg"};
+    std::string f_training{"../input/" + case_name + "_training_data.csv"};
+    std::string f_target{"../input/" + case_name + "_target_data.csv"};
 
-    std::vector net_structure = {2, 1}; // nodes per layer
-    fname_training = "../input/2x1_linear_classify_training_data.csv";
-    fname_target = "../input/2x1_linear_classify_target_data.csv";
+    nn_meta_data_t nn_meta = read_cfg(f_cfg);
 
-    // // std::vector net_structure = {2, 2, 1}; // nodes per layer
-    // fname_training = "../input/2x2x1_xor_training_data.csv";
-    // fname_target = "../input/2x2x1_xor_target_data.csv";
+    neural_net nn(nn_meta);
 
-    // // std::vector net_structure = {4, 3, 1}; // nodes per layer
-    // fname_training = "../input/iris_training_data.csv";
-    // fname_target = "../input/iris_target_data.csv";
-
-    neural_net nn(net_structure, &sigmoid);
-
-    f_data_t fd = read_f_data(fname_training, nn.num_nodes[0]);
-    f_data_t td = read_f_data(fname_target, nn.num_nodes[nn.num_layers - 1]);
+    f_data_t fd = read_f_data(f_training, nn.num_nodes[0]);
+    f_data_t td = read_f_data(f_target, nn.num_nodes[nn.num_layers - 1]);
 
     print_f_data("training data", fd);
     print_f_data("training target data", td);
@@ -49,14 +51,27 @@ int main(int argc, char *argv[]) {
     // nn.print_weights("nn");
 
     std::cout << "\nStart training cycle...\n\n";
-
-    nn.train(fd, td, update_strategy_t::immediate_update);
-    // nn.train(fd, td, update_strategy_t::batch_update);
-
+    nn.train(fd, td);
     std::cout << "Stop training cycle...\n\n\n";
 
-    nn.print_nodes("nn");
-    nn.print_weights("nn");
+    // nn.print_nodes("nn");
+    // nn.print_weights("nn");
+
+    std::cout << "Prediction with trained network:";
+
+    // for 2x2x1_example
+    std::vector<double> inp1{-7., -3.}, inp2{20., 2.}, outp;
+    outp = nn.forward_pass_with_output(inp1);
+    std::cout << "inp1 => " << outp[0] << std::endl;
+    outp = nn.forward_pass_with_output(inp2);
+    std::cout << "inp2 => " << outp[0] << std::endl;
+
+    // // for 2x2x1_xor
+    // std::vector<double> inp1{1., 0.}, inp2{1., 1.}, outp;
+    // outp = nn.forward_pass_with_output(inp1);
+    // std::cout << "inp1 => " << outp[0] << std::endl;
+    // outp = nn.forward_pass_with_output(inp2);
+    // std::cout << "inp2 => " << outp[0] << std::endl;
 
   } catch (std::exception &e) {
     std::cout << "Exception: " << e.what() << std::endl;

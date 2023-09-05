@@ -18,6 +18,40 @@ double identity(double x, f_tag tag) {
   }
 }
 
+double sigmoid(double x, f_tag tag) {
+
+  switch (tag) {
+
+  case f_tag::f:
+
+    return 1.0 / (1.0 + exp(-x));
+    break;
+
+  case f_tag::f1:
+
+    double val = 1.0 / (1.0 + exp(-x));
+    return val * (1.0 - val);
+    break;
+  }
+}
+
+double tanhyp(double x, f_tag tag) {
+
+  switch (tag) {
+
+  case f_tag::f:
+
+    return 2.0 / (1.0 + exp(-2.0 * x)) - 1.0;
+    break;
+
+  case f_tag::f1:
+
+    double val = 2.0 / (1.0 + exp(-2.0 * x)) - 1.0;
+    return 1.0 - val * val;
+    break;
+  }
+}
+
 double reLU(double x, f_tag tag) {
 
   switch (tag) {
@@ -58,40 +92,6 @@ double leaky_reLU(double x, f_tag tag) {
     } else {
       return 1.0;
     }
-    break;
-  }
-}
-
-double sigmoid(double x, f_tag tag) {
-
-  switch (tag) {
-
-  case f_tag::f:
-
-    return 1.0 / (1.0 + exp(-x));
-    break;
-
-  case f_tag::f1:
-
-    double val = 1.0 / (1.0 + exp(-x));
-    return val * (1.0 - val);
-    break;
-  }
-}
-
-double tanhyp(double x, f_tag tag) {
-
-  switch (tag) {
-
-  case f_tag::f:
-
-    return 2.0 / (1.0 + exp(-2.0 * x)) - 1.0;
-    break;
-
-  case f_tag::f1:
-
-    double val = 2.0 / (1.0 + exp(-2.0 * x)) - 1.0;
-    return 1.0 - val * val;
     break;
   }
 }

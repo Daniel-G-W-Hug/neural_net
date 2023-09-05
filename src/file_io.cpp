@@ -1,14 +1,126 @@
 #include "file_io.hpp"
 
-#include <fstream>
 #include <iostream>
 #include <mutex> // once_flag
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
+
+std::tuple<int, std::stringstream> get_next_line(std::ifstream &ifs) {
+
+  // for reading the file
+  std::string line;
+  static int line_number;
+
+  // read line by line (ignore comment lines)
+  while (std::getline(ifs, line)) {
+
+    if (line[0] == '#') {
+      // ignore comment lines starting with # in 1st column
+      // std::cout << "Found comment - line ignored.\n";
+      ++line_number;
+      continue;
+    }
+
+    ++line_number;
+
+    std::stringstream iss(line);
+    // std::cout << "line " << line_number << ": " << line << std::endl;
+
+    // std::stringstream does not have a copy-ctor, so it must be moved
+    return std::make_tuple(line_number, std::move(iss));
+  }
+  throw std::runtime_error(
+      "Could not find next line in file. Got stuck at line " +
+      std::to_string(line_number) + ".\n");
+}
+
+nn_meta_data_t read_cfg(std::string_view fname) {
+
+  nn_meta_data_t m_data;
+  std::ifstream ifs(fname);
+  int line_no;
+  std::stringstream iss;
+
+  int int_in;
+  double double_in;
+  char ch_in;
+
+  if (ifs.is_open()) {
+
+    // read network structure
+    std::tie(line_no, iss) = get_next_line(ifs);
+    while (iss >> int_in) {
+      // read int values as long as available (must be comma separated ints!)
+      if (int_in > 0) {
+        m_data.net_structure.push_back(int_in);
+      } else {
+        throw std::runtime_error("Positive number of nodes required in each "
+                                 "layer. Wrong input in line " +
+                                 std::to_string(line_no) + ".\n");
+      }
+
+      iss >> ch_in; // read and skip comma and whitespace
+    }
+    // std::cout << "m_data.net_structure.size() = " <<
+    // m_data.net_structure.size()
+    //           << "\n";
+
+    // read activation function
+    std::tie(line_no, iss) = get_next_line(ifs);
+    iss >> int_in;
+    if (int_in > 0 && int_in <= 5) {
+      m_data.af = static_cast<a_func_t>(int_in);
+    } else {
+      throw std::runtime_error("Wrong enum value for activation function: " +
+                               std::to_string(int_in) + " in line " +
+                               std::to_string(line_no) + ".\n");
+    }
+
+    // read epochmax
+    std::tie(line_no, iss) = get_next_line(ifs);
+    iss >> m_data.epochmax;
+
+    // read epoch_output_skip
+    std::tie(line_no, iss) = get_next_line(ifs);
+    iss >> m_data.epoch_output_skip;
+
+    // read learning_rate
+    std::tie(line_no, iss) = get_next_line(ifs);
+    iss >> m_data.learning_rate;
+
+    // read min_target_loss
+    std::tie(line_no, iss) = get_next_line(ifs);
+    iss >> m_data.min_target_loss;
+
+    // read min_relative_loss_change_rate
+    std::tie(line_no, iss) = get_next_line(ifs);
+    iss >> m_data.min_relative_loss_change_rate;
+
+    // read update strategy
+    std::tie(line_no, iss) = get_next_line(ifs);
+    iss >> int_in;
+    if (int_in > 0 && int_in <= 2) {
+      m_data.upstr = static_cast<update_strategy_t>(int_in);
+    } else {
+      throw std::runtime_error(
+          "Wrong enum value for update strategy: " + std::to_string(int_in) +
+          " in line " + std::to_string(line_no) + ".\n");
+    }
+
+    ifs.close();
+
+  } else {
+    throw std::runtime_error("Failed to open file: " + std::string(fname));
+  }
+
+  return m_data;
+}
 
 f_data_t read_f_data(std::string_view fname, int assert_size) {
-  // read file consisting of rows of csv data (same amount of data in each row)
+  // read file consisting of rows of csv data (same amount of data in each
+  // row)
 
   f_data_t file_data;
   std::ifstream ifs(fname);

@@ -1,14 +1,16 @@
 #ifndef READ_DATA_HPP
 #define READ_DATA_HPP
 
+#include "neural_net.hpp"
+
+#include <fstream>
+#include <sstream>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
-// read csv files or raw data organized in lines with constant number of integer
-// or double values stored in f_data_t
-
-using f_data_t = std::vector<std::vector<double>>;
-
+std::tuple<int, std::stringstream> get_next_line(std::ifstream &ifs);
+nn_meta_data_t read_cfg(std::string_view fname);
 f_data_t read_f_data(std::string_view fname, int assert_size);
 void print_f_data(std::string_view tag, f_data_t &fd);
 
