@@ -47,15 +47,15 @@ int main(int argc, char *argv[]) {
 
     // std::cout << "neural_net nodes not yet activated." << std::endl;
     nn.print_parameters("nn");
-    // nn.print_nodes("nn");
-    // nn.print_weights("nn");
+    nn.print_nodes("nn");
+    nn.print_weights("nn");
 
     std::cout << "\nStart training cycle...\n\n";
     nn.train(fd, td);
-    std::cout << "Stop training cycle...\n\n\n";
+    std::cout << "\nStop training cycle...\n\n\n";
 
-    // nn.print_nodes("nn");
-    // nn.print_weights("nn");
+    nn.print_nodes("nn");
+    nn.print_weights("nn");
 
     std::cout << "Prediction with trained network:";
 

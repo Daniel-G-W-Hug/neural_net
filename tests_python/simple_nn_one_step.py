@@ -14,7 +14,8 @@ def deriv_sigmoid(x):
 
 def mse_loss(y_true, y_pred):
     # y_true and y_pred are numpy arrays of the same length.
-    return ((y_true - y_pred) ** 2).mean()
+    # return ((y_true - y_pred) ** 2).mean()
+    return (0.5 * (y_pred - y_true) ** 2).mean()
 
 
 class OurNeuralNetwork:
@@ -40,9 +41,9 @@ class OurNeuralNetwork:
         self.w6 = 1
 
         # Biases
-        self.b1 = 0
-        self.b2 = 0
-        self.b3 = 0
+        self.b1 = 1
+        self.b2 = 1
+        self.b3 = 1
 
     def feedforward(self, x):
         # x is a numpy array with 2 elements.
@@ -61,20 +62,25 @@ class OurNeuralNetwork:
         epochs = 1  # number of times to loop through the entire dataset
 
         print()
-        print("w1= %.4f" % (self.w1))
-        print("w2= %.4f" % (self.w2))
-        print("b1= %.4f" % (self.b1))
+        print("w1= %.5f" % (self.w1))
+        print("w2= %.5f" % (self.w2))
+        print("b1= %.5f" % (self.b1))
         print()
-        print("w3= %.4f" % (self.w3))
-        print("w4= %.4f" % (self.w4))
-        print("b2= %.4f" % (self.b2))
+        print("w3= %.5f" % (self.w3))
+        print("w4= %.5f" % (self.w4))
+        print("b2= %.5f" % (self.b2))
         print()
-        print("w5= %.4f" % (self.w5))
-        print("w6= %.4f" % (self.w6))
-        print("b3= %.4f" % (self.b3))
+        print("w5= %.5f" % (self.w5))
+        print("w6= %.5f" % (self.w6))
+        print("b3= %.5f" % (self.b3))
         print()
 
+        y_preds = np.apply_along_axis(self.feedforward, 1, data)
+        loss = mse_loss(all_y_trues, y_preds)
+        print("Initial loss: %.5f" % (loss))
+
         for epoch in range(epochs):
+            print("epoch: ", epoch)
             for x, y_true in zip(data, all_y_trues):
                 # --- Do a feedforward (we'll need these values later)
                 sum_h1 = self.w1 * x[0] + self.w2 * x[1] + self.b1
@@ -88,28 +94,29 @@ class OurNeuralNetwork:
                 y_pred = o1
 
                 print()
-                print("sum_h1= %.4f" % (sum_h1))
-                print("h1= %.4f" % (h1))
-                print("sum_h2= %.4f" % (sum_h2))
-                print("h2= %.4f" % (h2))
-                print("sum_o1= %.4f" % (sum_o1))
-                print("o1= %.4f" % (o1))
+                print("sum_h1= %.5f" % (sum_h1))
+                print("h1= %.5f" % (h1))
+                print("sum_h2= %.5f" % (sum_h2))
+                print("h2= %.5f" % (h2))
+                print("sum_o1= %.5f" % (sum_o1))
+                print("o1= %.5f" % (o1))
                 print()
 
                 # --- Calculate partial derivatives.
                 # --- Naming: d_L_d_w1 represents "partial L / partial w1"
-                d_L_d_ypred = -2 * (y_true - y_pred)
+                # d_L_d_ypred = -2 * (y_true - y_pred)
+                d_L_d_ypred = y_pred - y_true
 
                 # Neuron o1
                 d_ypred_d_w5 = h1 * deriv_sigmoid(sum_o1)
                 d_ypred_d_w6 = h2 * deriv_sigmoid(sum_o1)
                 d_ypred_d_b3 = deriv_sigmoid(sum_o1)
 
-                print()
-                print("d_ypred_d_w5= %.4f" % (d_ypred_d_w5))
-                print("d_ypred_d_w6= %.4f" % (d_ypred_d_w6))
-                print("d_ypred_d_b3= %.4f" % (d_ypred_d_b3))
-                print()
+                # print()
+                # print("d_ypred_d_w5= %.5f" % (d_ypred_d_w5))
+                # print("d_ypred_d_w6= %.5f" % (d_ypred_d_w6))
+                # print("d_ypred_d_b3= %.5f" % (d_ypred_d_b3))
+                # print()
 
                 d_ypred_d_h1 = self.w5 * deriv_sigmoid(sum_o1)
                 d_ypred_d_h2 = self.w6 * deriv_sigmoid(sum_o1)
@@ -119,73 +126,112 @@ class OurNeuralNetwork:
                 d_h1_d_w2 = x[1] * deriv_sigmoid(sum_h1)
                 d_h1_d_b1 = deriv_sigmoid(sum_h1)
 
-                print()
-                print("d_h1_d_w1= %.4f" % (d_h1_d_w1))
-                print("d_h1_d_w2= %.4f" % (d_h1_d_w2))
-                print("d_h1_d_b1= %.4f" % (d_h1_d_b1))
-                print()
+                # print()
+                # print("d_h1_d_w1= %.5f" % (d_h1_d_w1))
+                # print("d_h1_d_w2= %.5f" % (d_h1_d_w2))
+                # print("d_h1_d_b1= %.5f" % (d_h1_d_b1))
+                # print()
 
                 # Neuron h2
                 d_h2_d_w3 = x[0] * deriv_sigmoid(sum_h2)
                 d_h2_d_w4 = x[1] * deriv_sigmoid(sum_h2)
                 d_h2_d_b2 = deriv_sigmoid(sum_h2)
 
+                # print()
+                # print("d_h2_d_w3= %.5f" % (d_h2_d_w3))
+                # print("d_h2_d_w4= %.5f" % (d_h2_d_w3))
+                # print("d_h2_d_b2= %.5f" % (d_h2_d_b2))
+                # print()
+
+                dLdw1 = d_L_d_ypred * d_ypred_d_h1 * d_h1_d_w1
+                dLdw2 = d_L_d_ypred * d_ypred_d_h1 * d_h1_d_w2
+                dLdb1 = d_L_d_ypred * d_ypred_d_h1 * d_h1_d_b1
+
+                dLdw3 = d_L_d_ypred * d_ypred_d_h2 * d_h2_d_w3
+                dLdw4 = d_L_d_ypred * d_ypred_d_h2 * d_h2_d_w4
+                dLdb2 = d_L_d_ypred * d_ypred_d_h2 * d_h2_d_b2
+
+                dLdw5 = d_L_d_ypred * d_ypred_d_w5
+                dLdw6 = d_L_d_ypred * d_ypred_d_w6
+                dLdb3 = d_L_d_ypred * d_ypred_d_b3
+
+                print("w1= %.5f" % (self.w1))
+                print("w2= %.5f" % (self.w2))
+                print("w3= %.5f" % (self.w3))
+                print("w4= %.5f" % (self.w4))
                 print()
-                print("d_h2_d_w3= %.4f" % (d_h2_d_w3))
-                print("d_h2_d_w4= %.4f" % (d_h2_d_w3))
-                print("d_h2_d_b2= %.4f" % (d_h2_d_b2))
+                print("w5= %.5f" % (self.w5))
+                print("w6= %.5f" % (self.w6))
+                print()
+                print("b1= %.5f" % (self.b1))
+                print("b2= %.5f" % (self.b2))
+                print("b3= %.5f" % (self.b3))
+                print()
+
+                print("dLdw1= %.5f" % (dLdw1))
+                print("dLdw2= %.5f" % (dLdw2))
+                print("dLdw3= %.5f" % (dLdw3))
+                print("dLdw4= %.5f" % (dLdw4))
+                print()
+                print("dLdw5= %.5f" % (dLdw5))
+                print("dLdw6= %.5f" % (dLdw6))
+                print()
+                print("dLdb1= %.5f" % (dLdb1))
+                print("dLdb2= %.5f" % (dLdb2))
+                print("dLdb3= %.5f" % (dLdb3))
                 print()
 
                 # --- Update weights and biases
                 # Neuron h1
-                self.w1 -= learn_rate * d_L_d_ypred * d_ypred_d_h1 * d_h1_d_w1
-                self.w2 -= learn_rate * d_L_d_ypred * d_ypred_d_h1 * d_h1_d_w2
-                self.b1 -= learn_rate * d_L_d_ypred * d_ypred_d_h1 * d_h1_d_b1
+                self.w1 -= learn_rate * dLdw1
+                self.w2 -= learn_rate * dLdw2
+                self.b1 -= learn_rate * dLdb1
 
                 # Neuron h2
-                self.w3 -= learn_rate * d_L_d_ypred * d_ypred_d_h2 * d_h2_d_w3
-                self.w4 -= learn_rate * d_L_d_ypred * d_ypred_d_h2 * d_h2_d_w4
-                self.b2 -= learn_rate * d_L_d_ypred * d_ypred_d_h2 * d_h2_d_b2
+                self.w3 -= learn_rate * dLdw3
+                self.w4 -= learn_rate * dLdw4
+                self.b2 -= learn_rate * dLdb2
 
                 # Neuron o1
-                self.w5 -= learn_rate * d_L_d_ypred * d_ypred_d_w5
-                self.w6 -= learn_rate * d_L_d_ypred * d_ypred_d_w6
-                self.b3 -= learn_rate * d_L_d_ypred * d_ypred_d_b3
+                self.w5 -= learn_rate * dLdw5
+                self.w6 -= learn_rate * dLdw6
+                self.b3 -= learn_rate * dLdb3
 
             # --- Calculate total loss at the end of each epoch
 
             y_preds = np.apply_along_axis(self.feedforward, 1, data)
             loss = mse_loss(all_y_trues, y_preds)
-            print("Epoch %d - loss: %.3f" % (epoch, loss))
+            print("Epoch %d - loss: %.5f" % (epoch, loss))
             print()
-            print("w1= %.4f" % (self.w1))
-            print("w2= %.4f" % (self.w2))
-            print("b1= %.4f" % (self.b1))
+            print("w1= %.5f" % (self.w1))
+            print("w2= %.5f" % (self.w2))
+            print("w3= %.5f" % (self.w3))
+            print("w4= %.5f" % (self.w4))
             print()
-            print("w3= %.4f" % (self.w3))
-            print("w4= %.4f" % (self.w4))
-            print("b2= %.4f" % (self.b2))
+            print("w5= %.5f" % (self.w5))
+            print("w6= %.5f" % (self.w6))
             print()
-            print("w5= %.4f" % (self.w5))
-            print("w6= %.4f" % (self.w6))
-            print("b3= %.4f" % (self.b3))
+            print("b1= %.5f" % (self.b1))
+            print("b2= %.5f" % (self.b2))
+            print("b3= %.5f" % (self.b3))
+            print()
 
 
 # Define dataset
 data = np.array(
     [
         [-2, -1],  # Alice
-        #  [25, 6],   # Bob
-        #  [17, 4],   # Charlie
-        #  [-15, -6], # Diana
+        [25, 6],  # Bob
+        # [17, 4],  # Charlie
+        # [-15, -6],  # Diana
     ]
 )
 all_y_trues = np.array(
     [
         1,  # Alice
-        #  0, # Bob
-        #  0, # Charlie
-        #  1, # Diana
+        0,  # Bob
+        # 0,  # Charlie
+        # 1,  # Diana
     ]
 )
 

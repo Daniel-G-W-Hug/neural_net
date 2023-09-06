@@ -39,8 +39,6 @@ neural_net::neural_net(nn_meta_data_t meta_data_input)
     std::vector<nn_node_t> tmp_nodes;
     for (int n = 0; n < num_nodes[l]; ++n) {
       nn_node_t tmp_node;
-      // if (l == 0 || l == num_layers - 1) {
-      //   // assign identity function for nodes in input and output layers
       if (l == 0) {
         // assign identity function for nodes in input layer
         tmp_node.af = &identity;
@@ -66,7 +64,7 @@ neural_net::neural_net(nn_meta_data_t meta_data_input)
       }
       if (l > 0) {
         // assign bias with fixed or random values
-        // tmp_node.b = 0.0;
+        // tmp_node.b = 1.0;
         tmp_node.b = d_ran(gen);
       }
       tmp_nodes.push_back(tmp_node);
@@ -275,16 +273,24 @@ void neural_net::train(f_data_t &fd, f_data_t &td) {
 
   bool keep_running{true};
   double total_epoch_loss{0.0}, total_epoch_loss_old{0.0};
+  double epoch_loss_updated{0.0};
 
   int epoch{0}, cnt{0};
   do {
 
+    reset_dLdw_and_dLdb_to_zero(); // implicitly happens for each pass through
+                                   // training data
+
     total_epoch_loss = 0.0;
-    reset_dLdw_and_dLdb_to_zero();
 
     double total_loss = 0.0;
     // for each input line do the weight & bias optimization pass
     for (int n = 0; n < num_training_data_sets; ++n) {
+
+      if (m_data.upstr == update_strategy_t::immediate_update) {
+        // online variant: update directly after each training pair
+        reset_dLdw_and_dLdb_to_zero();
+      }
 
       std::vector<double> input_vec{fd[n]};
       std::vector<double> target_output_vec{td[n]};
@@ -302,15 +308,8 @@ void neural_net::train(f_data_t &fd, f_data_t &td) {
 
       if (cnt % num_training_data_sets == 0 &&
           epoch % m_data.epoch_output_skip == 0) {
-        std::cout << "epoch " << std::setw(4) << epoch << ": ";
-        // std::cout << "epoch " << epoch << ": " << std::endl;
+        std::cout << "epoch " << std::setw(5) << epoch << ": ";
       }
-      // std::cout << "  n: " << std::setw(3) << n << ", L_n: " <<
-      // std::setw(9)
-      //           << std::setprecision(4) << partial_loss
-      //           << ", L_total : " << std::setw(9) <<
-      //           std::setprecision(4)
-      //           << total_loss << std::endl;
 
       ++cnt;
     }
@@ -318,12 +317,15 @@ void neural_net::train(f_data_t &fd, f_data_t &td) {
     if (m_data.upstr == update_strategy_t::batch_update) {
       // offline variant: update after the full set of training samples
       update_w_and_b(m_data.learning_rate, num_training_data_sets);
+      reset_dLdw_and_dLdb_to_zero();
     }
 
     total_epoch_loss = total_loss;
     if (epoch % m_data.epoch_output_skip == 0) {
       std::cout << "L_total: " << std::setw(9) << std::setprecision(4)
                 << total_loss;
+      // std::cout << "\nL_total after update: " << std::setw(9)
+      //           << std::setprecision(4) << epoch_loss_updated;
       if (epoch == 0) {
         // there is not reasonable dL yet
         std::cout << "\n";
@@ -333,7 +335,8 @@ void neural_net::train(f_data_t &fd, f_data_t &td) {
       }
     }
 
-    if (std::abs((total_loss - total_epoch_loss_old) / total_loss) < 1.e-8) {
+    if (std::abs((total_loss - total_epoch_loss_old) / total_loss) <
+        m_data.min_relative_loss_change_rate) {
       // stop if change rate becomes too small
       keep_running = false;
       std::cout << "\nRelative change rate too small! Stopped "
@@ -381,8 +384,9 @@ void neural_net::print_nodes(std::string_view tag) {
     }
     std::cout << std::endl;
     for (int n = 0; n < num_nodes[l]; ++n) {
-      std::cout << "  n: " << n << " nodes[" << l << "][" << n
-                << "].a = " << nodes[l][n].a << ", .b = " << nodes[l][n].b
+      std::cout << "  n: " << n << " nodes[" << l << "][" << n << "].a = ";
+      std::cout.precision(5);
+      std::cout << nodes[l][n].a << ", .b = " << nodes[l][n].b
                 << ", .dLdb = " << nodes[l][n].dLdb
                 << ", .o = " << nodes[l][n].o
                 << ", .delta = " << nodes[l][n].delta;
@@ -416,7 +420,7 @@ void neural_net::print_weights(std::string_view tag) {
     for (int to = 0; to < num_nodes[l]; ++to) {
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
         std::cout << "    w[" << l << "][" << to << "][" << from << "] = ";
-        std::cout.precision(4);
+        std::cout.precision(5);
         std::cout << w[l_idx][to][from] << std::endl;
       }
     }
@@ -424,7 +428,7 @@ void neural_net::print_weights(std::string_view tag) {
     for (int to = 0; to < num_nodes[l]; ++to) {
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
         std::cout << "    dLdw[" << l << "][" << to << "][" << from << "] = ";
-        std::cout.precision(4);
+        std::cout.precision(5);
         std::cout << dLdw[l_idx][to][from] << std::endl;
       }
     }
