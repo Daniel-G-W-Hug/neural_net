@@ -13,16 +13,22 @@ using f_data_t = std::vector<std::vector<double>>;
 
 enum class update_strategy_t { immediate_update = 1, batch_update };
 struct nn_meta_data_t {
-  std::vector<int> net_structure; // number of nodes for each layer (0: Input)
-  a_func_t af;  // chosen activation function for hidden & output layers
-  int epochmax; // max. number of iterations over the whole data set
-  int epoch_output_skip;  // output if epoch%epoch_output_skip == 0
+
+  std::vector<int> net_structure; // number of nodes for each layer
+
+  a_func_t af_h; // chosen activation function for hidden layers
+  a_func_t af_o; // chosen activation function for output layer
+
+  int epochmax;          // max. number of iterations over the whole data set
+  int epoch_output_skip; // output if epoch%epoch_output_skip == 0
+
   double learning_rate;   // chosen learning rate for gradient descent
   double min_target_loss; // minimum loss in training to stop prescribed
                           // iteration, even if epoch < epochmax
   double min_relative_loss_change_rate; // stop iteration, if loss changes
                                         // becomes too small
-  update_strategy_t upstr;              // update strategy for gradient descent
+
+  update_strategy_t upstr; // update strategy for gradient descent
 };
 
 struct nn_node_t {
@@ -94,5 +100,7 @@ struct neural_net {
   void print_nodes(std::string_view tag);
   void print_weights(std::string_view tag);
 };
+
+a_func_ptr_t get_activation_func_ptr(a_func_t af);
 
 #endif // NEURAL_NET_HPP

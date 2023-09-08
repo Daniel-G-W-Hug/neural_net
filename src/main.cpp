@@ -59,12 +59,12 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Prediction with trained network:";
 
-    // for 2x2x1_example
-    std::vector<double> inp1{-7., -3.}, inp2{20., 2.}, outp;
-    outp = nn.forward_pass_with_output(inp1);
-    std::cout << "inp1 => " << outp[0] << std::endl;
-    outp = nn.forward_pass_with_output(inp2);
-    std::cout << "inp2 => " << outp[0] << std::endl;
+    // // for 2x2x1_example
+    // std::vector<double> inp1{-7., -3.}, inp2{20., 2.}, outp;
+    // outp = nn.forward_pass_with_output(inp1);
+    // std::cout << "inp1 => " << outp[0] << std::endl;
+    // outp = nn.forward_pass_with_output(inp2);
+    // std::cout << "inp2 => " << outp[0] << std::endl;
 
     // // for 2x2x1_xor
     // std::vector<double> inp1{1., 0.}, inp2{1., 1.}, outp;
@@ -72,6 +72,14 @@ int main(int argc, char *argv[]) {
     // std::cout << "inp1 => " << outp[0] << std::endl;
     // outp = nn.forward_pass_with_output(inp2);
     // std::cout << "inp2 => " << outp[0] << std::endl;
+
+    // for iris_example
+    std::vector<double> inp1{4.8, 3.01, 1.45, 0.15},
+        inp2{6.31, 2.29, 4.45, 1.3}, outp;
+    outp = nn.forward_pass_with_output(inp1);
+    std::cout << "inp1 => " << outp[0] << std::endl;
+    outp = nn.forward_pass_with_output(inp2);
+    std::cout << "inp2 => " << outp[0] << std::endl;
 
   } catch (std::exception &e) {
     std::cout << "Exception: " << e.what() << std::endl;

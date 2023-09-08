@@ -67,36 +67,82 @@ nn_meta_data_t read_cfg(std::string_view fname) {
     // m_data.net_structure.size()
     //           << "\n";
 
-    // read activation function
+    // read activation function for hidden layers
     std::tie(line_no, iss) = get_next_line(ifs);
     iss >> int_in;
     if (int_in > 0 && int_in <= 5) {
-      m_data.af = static_cast<a_func_t>(int_in);
+      m_data.af_h = static_cast<a_func_t>(int_in);
     } else {
-      throw std::runtime_error("Wrong enum value for activation function: " +
-                               std::to_string(int_in) + " in line " +
-                               std::to_string(line_no) + ".\n");
+      throw std::runtime_error(
+          "Wrong enum value for activation function for hidden layers: " +
+          std::to_string(int_in) + " in line " + std::to_string(line_no) +
+          ".\n");
+    }
+
+    // read activation function for output layer
+    std::tie(line_no, iss) = get_next_line(ifs);
+    iss >> int_in;
+    if (int_in > 0 && int_in <= 5) {
+      m_data.af_o = static_cast<a_func_t>(int_in);
+    } else {
+      throw std::runtime_error(
+          "Wrong enum value for activation function for output layer: " +
+          std::to_string(int_in) + " in line " + std::to_string(line_no) +
+          ".\n");
     }
 
     // read epochmax
     std::tie(line_no, iss) = get_next_line(ifs);
-    iss >> m_data.epochmax;
+    iss >> int_in;
+    if (int_in > 0) {
+      m_data.epochmax = int_in;
+    } else {
+      throw std::runtime_error("epochmax must be a positive value. Line " +
+                               std::to_string(line_no) + ".\n");
+    }
 
     // read epoch_output_skip
     std::tie(line_no, iss) = get_next_line(ifs);
-    iss >> m_data.epoch_output_skip;
+    iss >> int_in;
+    if (int_in > 0) {
+      m_data.epoch_output_skip = int_in;
+    } else {
+      throw std::runtime_error(
+          "epoch_output_skip must be a positive value. Line " +
+          std::to_string(line_no) + ".\n");
+    }
 
     // read learning_rate
     std::tie(line_no, iss) = get_next_line(ifs);
-    iss >> m_data.learning_rate;
+    iss >> double_in;
+    if (double_in > 0.0) {
+      m_data.learning_rate = double_in;
+    } else {
+      throw std::runtime_error("learning rate must be a positive value. Line " +
+                               std::to_string(line_no) + ".\n");
+    }
 
     // read min_target_loss
     std::tie(line_no, iss) = get_next_line(ifs);
-    iss >> m_data.min_target_loss;
+    iss >> double_in;
+    if (double_in > 0.0) {
+      m_data.min_target_loss = double_in;
+    } else {
+      throw std::runtime_error(
+          "min_target_loss must be a positive value. Line " +
+          std::to_string(line_no) + ".\n");
+    }
 
     // read min_relative_loss_change_rate
     std::tie(line_no, iss) = get_next_line(ifs);
-    iss >> m_data.min_relative_loss_change_rate;
+    iss >> double_in;
+    if (double_in > 0.0) {
+      m_data.min_relative_loss_change_rate = double_in;
+    } else {
+      throw std::runtime_error(
+          "min_relative_loss_change_rate must be a positive value. Line " +
+          std::to_string(line_no) + ".\n");
+    }
 
     // read update strategy
     std::tie(line_no, iss) = get_next_line(ifs);

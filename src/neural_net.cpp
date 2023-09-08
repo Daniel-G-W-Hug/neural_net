@@ -11,7 +11,7 @@ std::random_device rd;
 std::mt19937 gen(rd());
 
 // uniform_real_distribution(from, to)
-// std::uniform_real_distribution<double> d_ran(-1.0, 1.0);
+// std::uniform_real_distribution<double> d_ran(0.0, 1.0);
 
 // normal_disribution(mean,stddev)
 std::normal_distribution<double> d_ran(0.0, 1.0);
@@ -35,32 +35,17 @@ neural_net::neural_net(nn_meta_data_t meta_data_input)
   }
 
   // create and intialize nodes in all layers
+  // (activation functions and bias values)
   for (int l = 0; l < num_layers; ++l) {
     std::vector<nn_node_t> tmp_nodes;
     for (int n = 0; n < num_nodes[l]; ++n) {
       nn_node_t tmp_node;
       if (l == 0) {
-        // assign identity function for nodes in input layer
-        tmp_node.af = &identity;
+        tmp_node.af = get_activation_func_ptr(a_func_t::identity);
+      } else if (l == num_layers - 1) {
+        tmp_node.af = get_activation_func_ptr(m_data.af_o);
       } else {
-        // assign user provided activation function for other layers
-        switch (m_data.af) {
-        case (a_func_t::identity):
-          tmp_node.af = &identity;
-          break;
-        case (a_func_t::sigmoid):
-          tmp_node.af = &sigmoid;
-          break;
-        case (a_func_t::tanhyp):
-          tmp_node.af = &tanhyp;
-          break;
-        case (a_func_t::reLU):
-          tmp_node.af = &reLU;
-          break;
-        case (a_func_t::leaky_reLU):
-          tmp_node.af = &leaky_reLU;
-          break;
-        }
+        tmp_node.af = get_activation_func_ptr(m_data.af_h);
       }
       if (l > 0) {
         // assign bias with fixed or random values
@@ -439,5 +424,25 @@ void neural_net::print_weights(std::string_view tag) {
                    "-----------+"
                 << std::endl;
     }
+  }
+}
+
+a_func_ptr_t get_activation_func_ptr(a_func_t af) {
+  switch (af) {
+  case (a_func_t::identity):
+    return &identity;
+    break;
+  case (a_func_t::sigmoid):
+    return &sigmoid;
+    break;
+  case (a_func_t::tanhyp):
+    return &tanhyp;
+    break;
+  case (a_func_t::reLU):
+    return &reLU;
+    break;
+  case (a_func_t::leaky_reLU):
+    return &leaky_reLU;
+    break;
   }
 }
