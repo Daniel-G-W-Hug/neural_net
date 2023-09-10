@@ -11,7 +11,11 @@
 // integer or double values stored in f_data_t
 using f_data_t = std::vector<std::vector<double>>;
 
-enum class update_strategy_t { immediate_update = 1, batch_update };
+enum class update_strategy_t {
+  immediate_update = 1,
+  mini_batch_update,
+  full_batch_update
+};
 struct nn_meta_data_t {
 
   std::vector<int> net_structure; // number of nodes for each layer
@@ -25,10 +29,11 @@ struct nn_meta_data_t {
   double learning_rate;   // chosen learning rate for gradient descent
   double min_target_loss; // minimum loss in training to stop prescribed
                           // iteration, even if epoch < epochmax
-  double min_relative_loss_change_rate; // stop iteration, if loss changes
-                                        // becomes too small
+  double min_relative_loss_change_rate; // stop iteration, if loss change
+                                        // becomes too small between epochs
 
   update_strategy_t upstr; // update strategy for gradient descent
+  int mini_batch_size;     // number of training pairs for mini batch
 };
 
 struct nn_node_t {

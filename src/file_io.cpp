@@ -147,12 +147,23 @@ nn_meta_data_t read_cfg(std::string_view fname) {
     // read update strategy
     std::tie(line_no, iss) = get_next_line(ifs);
     iss >> int_in;
-    if (int_in > 0 && int_in <= 2) {
+    if (int_in > 0 && int_in <= 3) {
       m_data.upstr = static_cast<update_strategy_t>(int_in);
     } else {
       throw std::runtime_error(
           "Wrong enum value for update strategy: " + std::to_string(int_in) +
           " in line " + std::to_string(line_no) + ".\n");
+    }
+
+    // read mini_batch_size
+    std::tie(line_no, iss) = get_next_line(ifs);
+    iss >> int_in;
+    if (int_in > 0) {
+      m_data.mini_batch_size = int_in;
+    } else {
+      throw std::runtime_error(
+          "mini_batch_size must be a positive value. Line " +
+          std::to_string(line_no) + ".\n");
     }
 
     ifs.close();

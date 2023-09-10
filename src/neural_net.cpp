@@ -241,98 +241,137 @@ void neural_net::train(f_data_t &fd, f_data_t &td) {
   // train the network using gradient descent
 
   // compatible number of lines for data and target values?
-  int num_training_data_sets = fd.size();
-  assert(num_training_data_sets == td.size());
-  std::cout << "num_training_data_sets = " << num_training_data_sets
+  int total_num_training_data_sets = fd.size();
+  assert(total_num_training_data_sets == td.size());
+  std::cout << "total_num_training_data_sets = " << total_num_training_data_sets
             << std::endl;
 
-  switch (m_data.upstr) {
-  case update_strategy_t::immediate_update:
-    std::cout << "update strategy: immediate update" << std::endl;
-    break;
-  case update_strategy_t::batch_update:
-    std::cout << "update strategy: batch update" << std::endl;
-    break;
+  std::uniform_int_distribution<> i_dist(0, total_num_training_data_sets - 1);
+  int num_training_data_sets_batch;
+  std::vector<int> index_vec;
+
+  if (m_data.upstr == update_strategy_t::mini_batch_update) {
+
+    // limit mini_batch_size to total size of training data set
+    if (m_data.mini_batch_size <= total_num_training_data_sets) {
+      num_training_data_sets_batch = m_data.mini_batch_size;
+    } else {
+      num_training_data_sets_batch = total_num_training_data_sets;
+    }
+    std::cout << "update strategy: mini batch,"
+              << " batch size: " << num_training_data_sets_batch << "\n\n";
+
+    index_vec.reserve(num_training_data_sets_batch);
+    // acutal random indices will be assigned in mini batch loop
+
+  } else {
+
+    if (m_data.upstr == update_strategy_t::immediate_update) {
+      std::cout << "update strategy: immediate update\n\n";
+    }
+    if (m_data.upstr == update_strategy_t::full_batch_update) {
+
+      std::cout << "update strategy: full batch update\n\n";
+    }
+    num_training_data_sets_batch = total_num_training_data_sets;
+    index_vec.reserve(num_training_data_sets_batch);
+    for (int i = 0; i < num_training_data_sets_batch; ++i) {
+      index_vec[i] = i;
+    }
   }
-  std::cout << std::endl;
 
-  bool keep_running{true};
-  double total_epoch_loss{0.0}, total_epoch_loss_old{0.0};
-  double epoch_loss_updated{0.0};
+  double total_loss{0.0}, total_loss_old{0.0}; // total loss in respective epoch
+  double total_loss_change_rate{0.0};
 
-  int epoch{0}, cnt{0};
-  do {
+  for (size_t epoch = 1; epoch <= m_data.epochmax; ++epoch) {
 
-    reset_dLdw_and_dLdb_to_zero(); // implicitly happens for each pass through
-                                   // training data
+    if (m_data.upstr != update_strategy_t::immediate_update) {
+      reset_dLdw_and_dLdb_to_zero();
+    }
+    total_loss = 0.0;
 
-    total_epoch_loss = 0.0;
+    if (m_data.upstr == update_strategy_t::mini_batch_update) {
+      // select the minibatch subset of samples for this epoch
+      for (int i = 0; i < num_training_data_sets_batch; ++i) {
+        index_vec[i] = i_dist(gen);
+      }
+      // std::cout << "selected indices of batch : [ ";
+      // for (int i = 0; i < num_training_data_sets_batch; ++i) {
+      //   if (i < num_training_data_sets_batch - 1) {
+      //     std::cout << index_vec[i] << ", ";
+      //   } else {
+      //     std::cout << index_vec[i] << " ]\n";
+      //   }
+      // }
+    }
 
-    double total_loss = 0.0;
-    // for each input line do the weight & bias optimization pass
-    for (int n = 0; n < num_training_data_sets; ++n) {
+    // for each training pair in training batch do the learning cycle via
+    // gradient calculation and weight and bias adaptation
+    for (int n = 0; n < num_training_data_sets_batch; ++n) {
 
       if (m_data.upstr == update_strategy_t::immediate_update) {
         // online variant: update directly after each training pair
         reset_dLdw_and_dLdb_to_zero();
       }
 
-      std::vector<double> input_vec{fd[n]};
-      std::vector<double> target_output_vec{td[n]};
+      // select the next training pair
+      std::vector<double> input_vec{fd[index_vec[n]]};
+      std::vector<double> target_output_vec{td[index_vec[n]]};
 
       forward_pass(input_vec);
-      double partial_loss = get_partial_loss(target_output_vec);
-      total_loss += partial_loss / num_training_data_sets;
+      total_loss +=
+          get_partial_loss(target_output_vec) / num_training_data_sets_batch;
 
       backward_pass(input_vec, target_output_vec);
 
       if (m_data.upstr == update_strategy_t::immediate_update) {
         // online variant: update directly after each training pair
-        update_w_and_b(m_data.learning_rate, 1);
+        update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
       }
 
-      if (cnt % num_training_data_sets == 0 &&
-          epoch % m_data.epoch_output_skip == 0) {
-        std::cout << "epoch " << std::setw(5) << epoch << ": ";
-      }
+    } // batch loop
 
-      ++cnt;
+    if (m_data.upstr != update_strategy_t::immediate_update) {
+      // offline variant: update after the corresponding batch of
+      // training samples
+      update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
     }
 
-    if (m_data.upstr == update_strategy_t::batch_update) {
-      // offline variant: update after the full set of training samples
-      update_w_and_b(m_data.learning_rate, num_training_data_sets);
-      reset_dLdw_and_dLdb_to_zero();
-    }
+    total_loss_change_rate =
+        std::abs((total_loss - total_loss_old) / total_loss);
 
-    total_epoch_loss = total_loss;
     if (epoch % m_data.epoch_output_skip == 0) {
+      std::cout << "epoch " << std::setw(5) << epoch << ": ";
       std::cout << "L_total: " << std::setw(9) << std::setprecision(4)
                 << total_loss;
-      // std::cout << "\nL_total after update: " << std::setw(9)
-      //           << std::setprecision(4) << epoch_loss_updated;
-      if (epoch == 0) {
+      if (epoch == 1) {
         // there is not reasonable dL yet
         std::cout << "\n";
       } else {
         std::cout << ", dL_total: " << std::setw(9) << std::setprecision(4)
-                  << total_loss - total_epoch_loss_old << "\n";
+                  << total_loss - total_loss_old
+                  << ", dL_rel_change: " << std::setw(9) << std::setprecision(4)
+                  << total_loss_change_rate << "\n";
       }
     }
 
-    if (std::abs((total_loss - total_epoch_loss_old) / total_loss) <
-        m_data.min_relative_loss_change_rate) {
-      // stop if change rate becomes too small
-      keep_running = false;
-      std::cout << "\nRelative change rate too small! Stopped "
-                   "iteration.\n\n\n";
+    if (total_loss_change_rate < m_data.min_relative_loss_change_rate) {
+      std::cout << "\nRelative change rate between epochs too small! Stopped "
+                   "iteration early.\n\n";
+      std::cout << "epoch " << epoch
+                << ": dL_rel_change = " << total_loss_change_rate << "\n\n\n";
+      break;
     }
+    total_loss_old = total_loss;
 
-    total_epoch_loss_old = total_loss;
-    ++epoch;
-
-  } while ((total_epoch_loss > m_data.min_target_loss) &&
-           (epoch < m_data.epochmax) && keep_running);
+    if (total_loss < m_data.min_target_loss) {
+      std::cout << "\nMinimum target loss reached before specified number of "
+                   "iterations. Stopped iteration early.\n\n";
+      std::cout << "epoch " << epoch << ": total_loss = " << total_loss
+                << "\n\n\n";
+      break;
+    }
+  } // epoch loop
 }
 
 void neural_net::print_parameters(std::string_view tag) {
