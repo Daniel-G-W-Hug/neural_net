@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     if (argc != 2) {
       std::cout << "Provide a 'case_name' as an argument, please.\n\n";
       std::cout << "Input file names will be derived from 'case_name':\n\n";
-      std::cout << "  - 'case_name.cfg' -> config file.\n";
+      std::cout << "  - 'case_name_training.cfg' -> config file incl. training meta data.\n";
       std::cout << "  - 'case_name_training_data.csv' -> training data set.\n";
       std::cout << "  - 'case_name_target_data.csv' -> target data set.\n\n";
       throw std::runtime_error(
