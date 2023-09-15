@@ -1,0 +1,1 @@
+rm *.aux *.fls *.log *.gz *.out *.pdf *.fdb_latexmk

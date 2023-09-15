@@ -1,0 +1,90 @@
+\documentclass[12pt,oneside,a4paper]{article}
+% Umlaute direkt nutzen (Text muss direkt in utf8 vorliegen => Default bei sublime): statt
+% \"A, \"O, \"U, \"a, \"o, \"u und \ss{} direkt Ä, Ö, Ü, ä, ö, ü und ß im Text engeben
+\usepackage[utf8]{inputenc}  % Umlaute direkt eingeben (ggf. latin1 statt utf8)
+\usepackage[T1]{fontenc}     % Ausgabe der Umlaute
+\usepackage{lmodern}
+
+\usepackage[dvips]{graphicx}       % alles zum Grafiken einbinden
+\graphicspath{ {./images/} }       % pointer to subdir for all images
+
+\usepackage{caption}
+\usepackage{subcaption}
+
+\usepackage{eurosym}               % Eurosymbol
+
+\usepackage[centertags]{amsmath}   % Mathekram: amstex
+\usepackage{amssymb}
+\usepackage{cases}
+\usepackage{latexsym}              % math symbols
+\usepackage{exscale}               % Summen-/Integralzeichen in richtiger Groesse
+
+\usepackage[dvipsnames]{xcolor}    % Textcolor for dvips w/ standard color names
+\usepackage{fancyhdr}              % to change header and footers
+
+% Deutsch als Hauptsprache im Dokument (Layout von Datum, Trennungsregeln etc.)
+% Umschaltbar mit \selectlanguage{}
+\usepackage[main=english,ngerman]{babel}  % support "Neue Rechtschreibung"
+
+\usepackage[version=4]{mhchem}     % Chemische Formeln (muss nach amsmath kommen!)
+
+\usepackage{hyperref}  % must be imported as last package!
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Overleaf Example},
+    pdfpagemode=FullScreen,
+    }
+
+% \DeclareMathSizes{11}{19}{13}{9} \DeclareMathSizes{12}{20}{14}{10}  % Larger formulas
+% vs. text
+
+\title{Neural Network Basics}
+\author{Daniel Hug}
+\date{August 2023}
+
+
+\pagestyle{fancy}       % Turn on the style
+\fancyfoot{}            % Clear the footer
+\fancyfoot[R]{\thepage} % Set the right side of the footer to be the page numberå
+
+% new commands for colorized vectors and components
+% \newcommand{\hdv}{\ensuremath{\textcolor{Goldenrod}{\vec{v}}}}
+% \newcommand{\hdvc}[1]{\ensuremath{v^{#1}}}
+% \newcommand{\hdtvc}[1]{\ensuremath{\widetilde{v^{#1}}}}
+
+% \newcommand{\hdbv}[1]{\ensuremath{\textcolor{MidnightBlue}{\overrightarrow{e_{#1}}}}}
+% \newcommand{\hdbvc}[1]{\ensuremath{\textcolor{MidnightBlue}{e_{#1}}}}
+% \newcommand{\hdbtv}[1]{\ensuremath{\textcolor{red}{\widetilde{\overrightarrow{e_{#1}}}}}}
+% \newcommand{\hdbtvc}[1]{\ensuremath{\textcolor{red}{\widetilde{e_{#1}}}}}
+
+% \newcommand{\hdcbv}{\ensuremath{\textcolor{MidnightBlue}{\epsilon}}}
+% \newcommand{\hdcbvc}[1]{\ensuremath{\textcolor{MidnightBlue}{\epsilon ^{#1}}}}
+% \newcommand{\hdcbtv}{\ensuremath{\textcolor{red}{\widetilde{\epsilon}}}}
+% \newcommand{\hdcbtvc}[1]{\ensuremath{\textcolor{red}{\widetilde{\epsilon ^{#1}}}}}
+
+
+\begin{document}
+
+\maketitle
+
+% no paragraph indentation on first line
+\setlength{\parindent}{0pt}
+
+\section{Neural Net Basics}
+
+Sources:
+\begin{itemize}
+    \item \url{http://neuralnetworksanddeeplearning.com}
+    \item \url{https://brilliant.org/wiki/feedforward-neural-networks/\#formal-definition}
+    \item \url{https://brilliant.org/wiki/backpropagation/}
+\end{itemize}
+
+
+\newpage
+
+\input{1_neural_net_definitions.tex}
+
+\end{document}
