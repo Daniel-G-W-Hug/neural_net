@@ -48,10 +48,6 @@ struct nn_node_t {
                  // either gets direct input (for input layer)
                  // or gets weighted sum of inputs of previous layer
 
-  double b{0.0};    // bias of node (not used for input layer)
-  double dLdb{0.0}; // delta of error function E depending on bias
-                    // (used for backpropagation)
-
   double o{0.0}; // output side of node; gets its value after applying the
                  // activation function o = af(sum_prev_layer(a*x) + b)
 
@@ -91,7 +87,7 @@ struct neural_net {
   int total_num_weights; // total number of weights in network
 
   neural_net(nn_structure_t structure_input);
-  void set_w_and_b_fixed(double val);
+  void set_w_fixed(double val);
 
   void forward_pass(std::vector<double> &input_vec);
   std::vector<double> forward_pass_with_output(std::vector<double> &input_vec);
@@ -99,8 +95,8 @@ struct neural_net {
   void backward_pass(std::vector<double> &input_vec,
                      std::vector<double> &target_vec);
 
-  void reset_dLdw_and_dLdb_to_zero();
-  void update_w_and_b(double learn_rate, int num_samples);
+  void reset_dLdw_to_zero();
+  void update_w(double learn_rate, int num_samples);
   double get_partial_loss(std::vector<double> &target_vec);
 
   void train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_data);

@@ -2,22 +2,21 @@
 
 #include <iostream>
 
-
-void print_parameters(std::string_view tag, neural_net const& nn) {
+void print_parameters(std::string_view tag, neural_net const &nn) {
   std::cout << "'" << tag << "' neural network with " << nn.num_layers
             << " layers:" << std::endl;
 
   // print number of nodes with user provided sizes only (leave out bias
   // nodes)
   for (int l = 0; l < nn.num_layers; ++l) {
-    std::cout << "layer " << l << " : " << nn.num_nodes[l] << " nodes"
+    std::cout << "layer " << l << " : " << nn.num_nodes[l] - 1 << " nodes"
               << std::endl;
   }
-  std::cout << "number of nodes: " << nn.total_num_nodes << std::endl;
+  std::cout << "number of nodes (w/o extra nodes for bias calculation): "
+            << nn.total_num_nodes - nn.num_layers << std::endl;
   std::cout << "total number of weights: " << nn.total_num_weights << std::endl;
-  std::cout << "total number of bias values: " << nn.total_num_bias << std::endl;
-  std::cout << "total number of learning parameters: "
-            << nn.total_num_weights + nn.total_num_bias << std::endl;
+  std::cout << "thereof number of weights for bias values: "
+            << nn.total_num_bias << std::endl;
   std::cout << "+------------------------------------------------------"
                "-------+"
             << std::endl;
@@ -25,7 +24,7 @@ void print_parameters(std::string_view tag, neural_net const& nn) {
   return;
 }
 
-void print_nodes(std::string_view tag, neural_net const& nn) {
+void print_nodes(std::string_view tag, neural_net const &nn) {
   for (int l = 0; l < nn.num_layers; ++l) {
     std::cout << "'" << tag << "' - nodes layer " << l;
     if (l == 0) {
@@ -39,9 +38,7 @@ void print_nodes(std::string_view tag, neural_net const& nn) {
     for (int n = 0; n < nn.num_nodes[l]; ++n) {
       std::cout << "  n: " << n << " nodes[" << l << "][" << n << "].a = ";
       std::cout.precision(5);
-      std::cout << nn.nodes[l][n].a << ", .b = " << nn.nodes[l][n].b
-                << ", .dLdb = " << nn.nodes[l][n].dLdb
-                << ", .o = " << nn.nodes[l][n].o
+      std::cout << nn.nodes[l][n].a << ", .o = " << nn.nodes[l][n].o
                 << ", .delta = " << nn.nodes[l][n].delta;
       // std::cout << " &af = " << (void *)nodes[l][n].af;
       std::cout << std::endl;
@@ -57,7 +54,7 @@ void print_nodes(std::string_view tag, neural_net const& nn) {
   // std::cout << std::endl;
 }
 
-void print_weights(std::string_view tag, neural_net const& nn) {
+void print_weights(std::string_view tag, neural_net const &nn) {
   for (int l = 1; l < nn.num_layers; ++l) {
     std::cout << "'" << tag << "' - weights layer " << l;
     if (l == nn.num_layers - 1) {
@@ -70,19 +67,27 @@ void print_weights(std::string_view tag, neural_net const& nn) {
 
     // show to user as index l, while internally using the index
     // transformation
-    for (int to = 0; to < nn.num_nodes[l]; ++to) {
+    for (int to = 0; to < nn.num_nodes[l] - 1; ++to) {
       for (int from = 0; from < nn.num_nodes[l - 1]; ++from) {
         std::cout << "    w[" << l << "][" << to << "][" << from << "] = ";
         std::cout.precision(5);
-        std::cout << nn.w[l_idx][to][from] << std::endl;
+        if (from == nn.num_nodes[l - 1] - 1) {
+          std::cout << nn.w[l_idx][to][from] << " (for bias)" << std::endl;
+        } else {
+          std::cout << nn.w[l_idx][to][from] << std::endl;
+        }
       }
     }
     std::cout << std::endl;
-    for (int to = 0; to < nn.num_nodes[l]; ++to) {
+    for (int to = 0; to < nn.num_nodes[l] - 1; ++to) {
       for (int from = 0; from < nn.num_nodes[l - 1]; ++from) {
         std::cout << "    dLdw[" << l << "][" << to << "][" << from << "] = ";
         std::cout.precision(5);
-        std::cout << nn.dLdw[l_idx][to][from] << std::endl;
+        if (from == nn.num_nodes[l - 1] - 1) {
+          std::cout << nn.dLdw[l_idx][to][from] << " (for bias)" << std::endl;
+        } else {
+          std::cout << nn.dLdw[l_idx][to][from] << std::endl;
+        }
       }
     }
     if (l < nn.num_layers - 1) {

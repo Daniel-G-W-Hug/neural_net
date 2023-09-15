@@ -59,6 +59,7 @@ class OurNeuralNetwork:
           Elements in all_y_trues correspond to those in data.
         """
         learn_rate = 0.1/4.   # this implementation does now take into account the training size set
+        #learn_rate = 0.1   # this implementation does now take into account the training size set
         epochs = 1  # number of times to loop through the entire dataset
 
         print()

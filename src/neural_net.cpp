@@ -27,11 +27,14 @@ neural_net::neural_net(nn_structure_t structure_input)
   num_nodes = m_structure.net_structure;
 
   for (int l = 0; l < num_layers; ++l) {
-    total_num_nodes += num_nodes[l];
     if (l > 0) {
-      // bias values will not be used in input layer
+      // calc no. of bias values before adding the extra nodes
       total_num_bias += num_nodes[l];
     }
+    // add const output nodes in input and hidden layers
+    // for bias calculation
+    num_nodes[l] += 1;
+    total_num_nodes += num_nodes[l];
   }
 
   // create and intialize nodes in all layers
@@ -41,16 +44,17 @@ neural_net::neural_net(nn_structure_t structure_input)
     for (int n = 0; n < num_nodes[l]; ++n) {
       nn_node_t tmp_node;
       if (l == 0) {
+        // for input layer
         tmp_node.af = get_activation_func_ptr(a_func_t::identity);
       } else if (l == num_layers - 1) {
         tmp_node.af = get_activation_func_ptr(m_structure.af_o);
       } else {
         tmp_node.af = get_activation_func_ptr(m_structure.af_h);
       }
-      if (l > 0) {
-        // assign bias with fixed or random values
-        // tmp_node.b = 1.0;
-        tmp_node.b = d_ran(gen);
+      if (n == num_nodes[l] - 1) {
+        // for const input node used for bias calculation
+        tmp_node.af = get_activation_func_ptr(a_func_t::identity);
+        tmp_node.a = 1.0;
       }
       tmp_nodes.push_back(tmp_node);
     }
@@ -69,7 +73,7 @@ neural_net::neural_net(nn_structure_t structure_input)
     std::vector<std::vector<double>> tmp_weights;
     std::vector<std::vector<double>> tmp_dweights;
 
-    for (int to = 0; to < num_nodes[l]; ++to) {
+    for (int to = 0; to < num_nodes[l] - 1; ++to) {
 
       std::vector<double> tmp_w;
       std::vector<double> tmp_dLdw;
@@ -77,8 +81,7 @@ neural_net::neural_net(nn_structure_t structure_input)
 
         double dval = 0.0; // dLdw is zero initialized
 
-        // assign weights with fixed or random values
-        // double val = 1.0;
+        // assign weights random values
         double val = d_ran(gen);
 
         tmp_w.push_back(val);
@@ -93,31 +96,33 @@ neural_net::neural_net(nn_structure_t structure_input)
     dLdw.push_back(tmp_dweights);
   }
   total_num_weights = w_cnt; // total number of weights in network
-}
 
-void neural_net::set_w_and_b_fixed(double val) {
+} // neural_net (ctor)
+
+void neural_net::set_w_fixed(double val) {
 
   for (int l = 1; l < num_layers; ++l) {
     int l_idx = l - 1; // index transformation for weights (start index 0)
-    for (int to = 0; to < num_nodes[l]; ++to) {
-      nodes[l][to].b = val;
+    for (int to = 0; to < num_nodes[l] - 1; ++to) {
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
         w[l_idx][to][from] = val;
       }
     }
   }
-}
+} // set_w_and_b_fixed
 
 void neural_net::forward_pass(std::vector<double> &input_vec) {
   // propagate the input data through the network
 
   // set input layer nodes to user provided values
   int l = 0; // input layer
-  for (int to = 0; to < num_nodes[l]; ++to) {
+  for (int to = 0; to < num_nodes[l] - 1; ++to) {
     nodes[l][to].a = input_vec[to];
   }
+  // // set const output node for bias calculation
+  // nodes[l][num_nodes[l] - 1].a = 1.0;
 
-  // forward pass through network starts at layer 1
+  // forward pass through inner network layers starts at layer 1
   for (int l = 1; l < num_layers; ++l) {
 
     int l_idx = l - 1; // index transformation for weights (start index 0)
@@ -128,9 +133,9 @@ void neural_net::forward_pass(std::vector<double> &input_vec) {
           nodes[l - 1][from].af(nodes[l - 1][from].a, f_tag::f);
     }
 
-    // calculate summed activation for all nodes incl. node bias
-    for (int to = 0; to < num_nodes[l]; ++to) {
-      nodes[l][to].a = nodes[l][to].b;
+    // calculate summed activation for all nodes (incl. node bias)
+    for (int to = 0; to < num_nodes[l] - 1; ++to) {
+      nodes[l][to].a = 0.0;
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
         nodes[l][to].a += w[l_idx][to][from] * nodes[l - 1][from].o;
       }
@@ -139,10 +144,11 @@ void neural_net::forward_pass(std::vector<double> &input_vec) {
 
   // activate all nodes in output layer to make output available
   l = num_layers - 1;
-  for (int to = 0; to < num_nodes[l]; ++to) {
+  for (int to = 0; to < num_nodes[l] - 1; ++to) {
     nodes[l][to].o = nodes[l][to].af(nodes[l][to].a, f_tag::f);
   }
-}
+
+} // forward_pass
 
 std::vector<double>
 neural_net::forward_pass_with_output(std::vector<double> &input_vec) {
@@ -153,15 +159,15 @@ neural_net::forward_pass_with_output(std::vector<double> &input_vec) {
   std::vector<double> output_vec;
 
   int l = num_layers - 1;
-  output_vec.reserve(num_nodes[l]);
+  output_vec.reserve(num_nodes[l] - 1);
 
   // copy output layer to output vector
-  for (int to = 0; to < num_nodes[l]; ++to) {
+  for (int to = 0; to < num_nodes[l] - 1; ++to) {
     output_vec[to] = nodes[l][to].o;
   }
 
   return output_vec;
-}
+} // forward_pass_with_output
 
 void neural_net::backward_pass(std::vector<double> &input_vec,
                                std::vector<double> &output_target_vec) {
@@ -170,7 +176,7 @@ void neural_net::backward_pass(std::vector<double> &input_vec,
 
   // calculate deltas in output layer
   int l = num_layers - 1;
-  for (int to = 0; to < num_nodes[l]; ++to) {
+  for (int to = 0; to < num_nodes[l] - 1; ++to) {
     nodes[l][to].delta = (nodes[l][to].o - output_target_vec[to]) *
                          nodes[l][to].af(nodes[l][to].a, f_tag::f1);
   }
@@ -179,7 +185,7 @@ void neural_net::backward_pass(std::vector<double> &input_vec,
   for (int l = num_layers - 2; l > 0; --l) {
     int l_idx = l - 1; // index transformation for weights (start index 0)
     for (int from = 0; from < num_nodes[l]; ++from) {
-      for (int to = 0; to < num_nodes[l + 1]; ++to) {
+      for (int to = 0; to < num_nodes[l + 1] - 1; ++to) {
         nodes[l][from].delta = w[l_idx + 1][to][from] * nodes[l + 1][to].delta *
                                nodes[l][from].af(nodes[l][from].a, f_tag::f1);
       }
@@ -189,43 +195,40 @@ void neural_net::backward_pass(std::vector<double> &input_vec,
   // Update dLdb and dLdw accordingly
   for (int l = 1; l < num_layers; ++l) {
     int l_idx = l - 1; // index transformation for weights (start index 0)
-    for (int to = 0; to < num_nodes[l]; ++to) {
-      nodes[l][to].dLdb += nodes[l][to].delta;
+    for (int to = 0; to < num_nodes[l] - 1; ++to) {
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
         dLdw[l_idx][to][from] += nodes[l][to].delta * nodes[l - 1][from].o;
       }
     }
   }
-}
+} // backward_pass
 
-void neural_net::reset_dLdw_and_dLdb_to_zero() {
+void neural_net::reset_dLdw_to_zero() {
   // reset all deltas for bias and weights to zero for next epochation in
   // gradient descent
 
   for (int l = 1; l < num_layers; ++l) {
     int l_idx = l - 1; // index transformation for weights (start index 0)
-    for (int to = 0; to < num_nodes[l]; ++to) {
-      nodes[l][to].dLdb = 0.0;
+    for (int to = 0; to < num_nodes[l] - 1; ++to) {
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
         dLdw[l_idx][to][from] = 0.0;
       }
     }
   }
-}
+} // reset_dLdw_to_zero
 
-void neural_net::update_w_and_b(double learning_rate, int num_samples) {
+void neural_net::update_w(double learning_rate, int num_samples) {
   double scale_fact = learning_rate / num_samples;
 
   for (int l = 1; l < num_layers; ++l) {
     int l_idx = l - 1; // index transformation for weights (start index 0)
-    for (int to = 0; to < num_nodes[l]; ++to) {
-      nodes[l][to].b -= scale_fact * nodes[l][to].dLdb;
+    for (int to = 0; to < num_nodes[l] - 1; ++to) {
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
         w[l_idx][to][from] -= scale_fact * dLdw[l_idx][to][from];
       }
     }
   }
-}
+} // update_w
 
 double neural_net::get_partial_loss(std::vector<double> &output_target_vec) {
   //
@@ -243,14 +246,15 @@ double neural_net::get_partial_loss(std::vector<double> &output_target_vec) {
 
   int l = num_layers - 1;
   double partial_loss;
-  for (int to = 0; to < num_nodes[l]; ++to) {
+  for (int to = 0; to < num_nodes[l] - 1; ++to) {
     partial_loss = std::pow(nodes[l][to].o - output_target_vec[to], 2.0);
   }
   // partial loss L_n for the given training pair
   return 0.5 * partial_loss;
-}
+} // get_partial_loss
 
-void neural_net::train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_data) {
+void neural_net::train(f_data_t &fd, f_data_t &td,
+                       nn_training_meta_data_t m_data) {
   // train the network using gradient descent
 
   // compatible number of lines for data and target values?
@@ -299,7 +303,7 @@ void neural_net::train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_dat
   for (size_t epoch = 1; epoch <= m_data.epochmax; ++epoch) {
 
     if (m_data.upstr != update_strategy_t::immediate_update) {
-      reset_dLdw_and_dLdb_to_zero();
+      reset_dLdw_to_zero();
     }
     total_loss = 0.0;
 
@@ -324,7 +328,7 @@ void neural_net::train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_dat
 
       if (m_data.upstr == update_strategy_t::immediate_update) {
         // online variant: update directly after each training pair
-        reset_dLdw_and_dLdb_to_zero();
+        reset_dLdw_to_zero();
       }
 
       // select the next training pair
@@ -339,7 +343,7 @@ void neural_net::train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_dat
 
       if (m_data.upstr == update_strategy_t::immediate_update) {
         // online variant: update directly after each training pair
-        update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
+        update_w(m_data.learning_rate, num_training_data_sets_batch);
         // update_w_and_b(m_data.learning_rate, 1);
       }
 
@@ -348,7 +352,7 @@ void neural_net::train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_dat
     if (m_data.upstr != update_strategy_t::immediate_update) {
       // offline variant: update after the corresponding batch of
       // training samples
-      update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
+      update_w(m_data.learning_rate, num_training_data_sets_batch);
     }
 
     total_loss_change_rate =
@@ -386,4 +390,5 @@ void neural_net::train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_dat
       break;
     }
   } // epoch loop
-}
+
+} // train
