@@ -31,11 +31,11 @@ int main(int argc, char *argv[]) {
     }
     std::string case_name(argv[1]);
 
-    std::string f_cfg{"../input/" + case_name + "_training.cfg"};
+    std::string f_training_cfg{"../input/" + case_name + "_training.cfg"};
     std::string f_training{"../input/" + case_name + "_training_data.csv"};
     std::string f_target{"../input/" + case_name + "_target_data.csv"};
     
-    auto [nn_structure, nn_meta] = read_cfg(f_cfg);
+    auto [nn_structure, nn_meta] = read_training_cfg(f_training_cfg);
 
     neural_net nn(nn_structure);
 

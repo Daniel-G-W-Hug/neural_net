@@ -36,7 +36,7 @@ std::tuple<int, std::stringstream> get_next_line(std::ifstream &ifs) {
       std::to_string(line_number) + ".\n");
 }
 
-std::tuple<nn_structure_t, nn_training_meta_data_t> read_cfg(std::string_view fname) {
+std::tuple<nn_structure_t, nn_training_meta_data_t> read_training_cfg(std::string_view fname) {
 
   nn_structure_t m_structure;
   nn_training_meta_data_t m_data;

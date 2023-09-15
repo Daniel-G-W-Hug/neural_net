@@ -10,7 +10,7 @@
 #include <vector>
 
 std::tuple<int, std::stringstream> get_next_line(std::ifstream &ifs);
-std::tuple<nn_structure_t, nn_training_meta_data_t> read_cfg(std::string_view fname);
+std::tuple<nn_structure_t, nn_training_meta_data_t> read_training_cfg(std::string_view fname);
 f_data_t read_f_data(std::string_view fname, int assert_size);
 void print_f_data(std::string_view tag, f_data_t &fd);
 
