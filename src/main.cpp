@@ -4,6 +4,7 @@
 
 #include "file_io.hpp"
 #include "neural_net.hpp"
+#include "neural_net_print.hpp"
 
 // uncomment to disable assert()
 // #define NDEBUG
@@ -35,7 +36,7 @@ int main(int argc, char *argv[]) {
     std::string f_training{"../input/" + case_name + "_training_data.csv"};
     std::string f_target{"../input/" + case_name + "_target_data.csv"};
     
-    auto [nn_structure, nn_meta] = read_training_cfg(f_training_cfg);
+    auto const& [nn_structure, nn_meta] = read_training_cfg(f_training_cfg);
 
     neural_net nn(nn_structure);
 

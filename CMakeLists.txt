@@ -22,4 +22,4 @@ if(CMAKE_BUILD_TYPE EQUAL "Debug")
   endif()
 endif()
 
-add_executable(nn src/main.cpp src/activation_func.cpp src/neural_net.cpp src/file_io.cpp)
+add_executable(nn src/main.cpp src/activation_func.cpp src/neural_net.cpp src/file_io.cpp src/neural_net_print.cpp)

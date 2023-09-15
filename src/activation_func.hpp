@@ -18,4 +18,6 @@ double tanhyp(double x, f_tag tag = f_tag::f);
 double reLU(double x, f_tag tag = f_tag::f);
 double leaky_reLU(double x, f_tag tag = f_tag::f);
 
+a_func_ptr_t get_activation_func_ptr(a_func_t af);
+
 #endif // ACTIVATION_FUNC_HPP

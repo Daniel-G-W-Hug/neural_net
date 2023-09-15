@@ -95,3 +95,23 @@ double leaky_reLU(double x, f_tag tag) {
     break;
   }
 }
+
+a_func_ptr_t get_activation_func_ptr(a_func_t af) {
+  switch (af) {
+  case (a_func_t::identity):
+    return &identity;
+    break;
+  case (a_func_t::sigmoid):
+    return &sigmoid;
+    break;
+  case (a_func_t::tanhyp):
+    return &tanhyp;
+    break;
+  case (a_func_t::reLU):
+    return &reLU;
+    break;
+  case (a_func_t::leaky_reLU):
+    return &leaky_reLU;
+    break;
+  }
+}
