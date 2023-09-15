@@ -16,12 +16,15 @@ enum class update_strategy_t {
   mini_batch_update,
   full_batch_update
 };
-struct nn_meta_data_t {
+
+struct nn_structure_t {
 
   std::vector<int> net_structure; // number of nodes for each layer
 
   a_func_t af_h; // chosen activation function for hidden layers
   a_func_t af_o; // chosen activation function for output layer
+};
+struct nn_training_meta_data_t {
 
   int epochmax;          // max. number of iterations over the whole data set
   int epoch_output_skip; // output if epoch%epoch_output_skip == 0
@@ -59,7 +62,7 @@ struct nn_node_t {
 
 struct neural_net {
 
-  nn_meta_data_t m_data;
+  nn_structure_t m_structure;
 
   int num_layers; // number of layers in neural_net:
                   // l == 0: input layer
@@ -87,7 +90,7 @@ struct neural_net {
 
   int total_num_weights; // total number of weights in network
 
-  neural_net(nn_meta_data_t meta_data_input);
+  neural_net(nn_structure_t structure_input);
 
   void forward_pass(std::vector<double> &input_vec);
   std::vector<double> forward_pass_with_output(std::vector<double> &input_vec);
@@ -99,7 +102,7 @@ struct neural_net {
   void update_w_and_b(double learn_rate, int num_samples);
   double get_partial_loss(std::vector<double> &target_vec);
 
-  void train(f_data_t &fd, f_data_t &td);
+  void train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_data);
 
   void print_parameters(std::string_view tag);
   void print_nodes(std::string_view tag);

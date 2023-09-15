@@ -16,15 +16,15 @@ std::mt19937 gen(rd());
 // normal_disribution(mean,stddev)
 std::normal_distribution<double> d_ran(0.0, 1.0);
 
-neural_net::neural_net(nn_meta_data_t meta_data_input)
-    : m_data{std::move(meta_data_input)} {
+neural_net::neural_net(nn_structure_t structure_input)
+    : m_structure{std::move(structure_input)} {
   // set up neural network structure
 
-  num_layers = m_data.net_structure.size();
+  num_layers = m_structure.net_structure.size();
   // the minimum network has an input and an output layer
   assert(num_layers >= 2);
 
-  num_nodes = m_data.net_structure;
+  num_nodes = m_structure.net_structure;
 
   for (int l = 0; l < num_layers; ++l) {
     total_num_nodes += num_nodes[l];
@@ -43,9 +43,9 @@ neural_net::neural_net(nn_meta_data_t meta_data_input)
       if (l == 0) {
         tmp_node.af = get_activation_func_ptr(a_func_t::identity);
       } else if (l == num_layers - 1) {
-        tmp_node.af = get_activation_func_ptr(m_data.af_o);
+        tmp_node.af = get_activation_func_ptr(m_structure.af_o);
       } else {
-        tmp_node.af = get_activation_func_ptr(m_data.af_h);
+        tmp_node.af = get_activation_func_ptr(m_structure.af_h);
       }
       if (l > 0) {
         // assign bias with fixed or random values
@@ -237,7 +237,7 @@ double neural_net::get_partial_loss(std::vector<double> &output_target_vec) {
   return 0.5 * partial_loss;
 }
 
-void neural_net::train(f_data_t &fd, f_data_t &td) {
+void neural_net::train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_data) {
   // train the network using gradient descent
 
   // compatible number of lines for data and target values?

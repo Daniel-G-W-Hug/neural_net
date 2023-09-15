@@ -36,9 +36,11 @@ std::tuple<int, std::stringstream> get_next_line(std::ifstream &ifs) {
       std::to_string(line_number) + ".\n");
 }
 
-nn_meta_data_t read_cfg(std::string_view fname) {
+std::tuple<nn_structure_t, nn_training_meta_data_t> read_cfg(std::string_view fname) {
 
-  nn_meta_data_t m_data;
+  nn_structure_t m_structure;
+  nn_training_meta_data_t m_data;
+
   std::ifstream ifs(fname);
   int line_no;
   std::stringstream iss;
@@ -54,7 +56,7 @@ nn_meta_data_t read_cfg(std::string_view fname) {
     while (iss >> int_in) {
       // read int values as long as available (must be comma separated ints!)
       if (int_in > 0) {
-        m_data.net_structure.push_back(int_in);
+        m_structure.net_structure.push_back(int_in);
       } else {
         throw std::runtime_error("Positive number of nodes required in each "
                                  "layer. Wrong input in line " +
@@ -71,7 +73,7 @@ nn_meta_data_t read_cfg(std::string_view fname) {
     std::tie(line_no, iss) = get_next_line(ifs);
     iss >> int_in;
     if (int_in > 0 && int_in <= 5) {
-      m_data.af_h = static_cast<a_func_t>(int_in);
+      m_structure.af_h = static_cast<a_func_t>(int_in);
     } else {
       throw std::runtime_error(
           "Wrong enum value for activation function for hidden layers: " +
@@ -83,7 +85,7 @@ nn_meta_data_t read_cfg(std::string_view fname) {
     std::tie(line_no, iss) = get_next_line(ifs);
     iss >> int_in;
     if (int_in > 0 && int_in <= 5) {
-      m_data.af_o = static_cast<a_func_t>(int_in);
+      m_structure.af_o = static_cast<a_func_t>(int_in);
     } else {
       throw std::runtime_error(
           "Wrong enum value for activation function for output layer: " +
@@ -172,7 +174,7 @@ nn_meta_data_t read_cfg(std::string_view fname) {
     throw std::runtime_error("Failed to open file: " + std::string(fname));
   }
 
-  return m_data;
+  return std::make_tuple(m_structure, m_data);
 }
 
 f_data_t read_f_data(std::string_view fname, int assert_size) {

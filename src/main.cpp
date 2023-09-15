@@ -31,13 +31,13 @@ int main(int argc, char *argv[]) {
     }
     std::string case_name(argv[1]);
 
-    std::string f_cfg{"../input/" + case_name + ".cfg"};
+    std::string f_cfg{"../input/" + case_name + "_training.cfg"};
     std::string f_training{"../input/" + case_name + "_training_data.csv"};
     std::string f_target{"../input/" + case_name + "_target_data.csv"};
+    
+    auto [nn_structure, nn_meta] = read_cfg(f_cfg);
 
-    nn_meta_data_t nn_meta = read_cfg(f_cfg);
-
-    neural_net nn(nn_meta);
+    neural_net nn(nn_structure);
 
     f_data_t fd = read_f_data(f_training, nn.num_nodes[0]);
     f_data_t td = read_f_data(f_target, nn.num_nodes[nn.num_layers - 1]);
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     // nn.print_weights("nn");
 
     std::cout << "\nStart training cycle...\n\n";
-    nn.train(fd, td);
+    nn.train(fd, td, nn_meta);
     std::cout << "\nStop training cycle...\n\n\n";
 
     nn.print_nodes("nn");
