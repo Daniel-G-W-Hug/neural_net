@@ -91,6 +91,7 @@ struct neural_net {
   int total_num_weights; // total number of weights in network
 
   neural_net(nn_structure_t structure_input);
+  void set_w_and_b_fixed(double val);
 
   void forward_pass(std::vector<double> &input_vec);
   std::vector<double> forward_pass_with_output(std::vector<double> &input_vec);

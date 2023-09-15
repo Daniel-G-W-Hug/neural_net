@@ -40,6 +40,8 @@ int main(int argc, char *argv[]) {
 
     neural_net nn(nn_structure);
 
+    nn.set_w_and_b_fixed(1.0);
+
     f_data_t fd = read_f_data(f_training, nn.num_nodes[0]);
     f_data_t td = read_f_data(f_target, nn.num_nodes[nn.num_layers - 1]);
 
@@ -48,24 +50,25 @@ int main(int argc, char *argv[]) {
 
     // std::cout << "neural_net nodes not yet activated." << std::endl;
     print_parameters("nn", nn);
-    // print_nodes("nn", nn);
-    // print_weights("nn", nn);
+    print_nodes("nn", nn);
+    print_weights("nn", nn);
 
     std::cout << "\nStart training cycle...\n\n";
     nn.train(fd, td, nn_meta);
     std::cout << "\nStop training cycle...\n\n\n";
+
 
     print_nodes("nn", nn);
     print_weights("nn", nn);
 
     std::cout << "Prediction with trained network:\n";
 
-    // // for 2x2x1_example
-    // std::vector<double> inp1{-7., -3.}, inp2{20., 2.}, outp;
-    // outp = nn.forward_pass_with_output(inp1);
-    // std::cout << "inp1 => " << outp[0] << std::endl;
-    // outp = nn.forward_pass_with_output(inp2);
-    // std::cout << "inp2 => " << outp[0] << std::endl;
+    // for 2x2x1_example
+    std::vector<double> inp1{-7., -3.}, inp2{20., 2.}, outp;
+    outp = nn.forward_pass_with_output(inp1);
+    std::cout << "inp1 => " << outp[0] << std::endl;
+    outp = nn.forward_pass_with_output(inp2);
+    std::cout << "inp2 => " << outp[0] << std::endl;
 
     // // for 2x2x1_xor
     // std::vector<double> inp1{1., 0.}, inp2{1., 1.}, outp;
@@ -74,13 +77,13 @@ int main(int argc, char *argv[]) {
     // outp = nn.forward_pass_with_output(inp2);
     // std::cout << "inp2 => " << outp[0] << std::endl;
 
-    // for iris_example
-    std::vector<double> inp1{4.8, 3.01, 1.45, 0.15},
-        inp2{6.31, 2.29, 4.45, 1.3}, outp;
-    outp = nn.forward_pass_with_output(inp1);
-    std::cout << "inp1 => " << outp[0] << std::endl;
-    outp = nn.forward_pass_with_output(inp2);
-    std::cout << "inp2 => " << outp[0] << std::endl;
+    // // for iris_example
+    // std::vector<double> inp1{4.8, 3.01, 1.45, 0.15},
+    //     inp2{6.31, 2.29, 4.45, 1.3}, outp;
+    // outp = nn.forward_pass_with_output(inp1);
+    // std::cout << "inp1 => " << outp[0] << std::endl;
+    // outp = nn.forward_pass_with_output(inp2);
+    // std::cout << "inp2 => " << outp[0] << std::endl;
 
   } catch (std::exception &e) {
     std::cout << "Exception: " << e.what() << std::endl;

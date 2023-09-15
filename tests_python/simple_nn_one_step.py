@@ -58,7 +58,7 @@ class OurNeuralNetwork:
         - all_y_trues is a numpy array with n elements.
           Elements in all_y_trues correspond to those in data.
         """
-        learn_rate = 0.1
+        learn_rate = 0.1/4.   # this implementation does now take into account the training size set
         epochs = 1  # number of times to loop through the entire dataset
 
         print()
@@ -222,16 +222,16 @@ data = np.array(
     [
         [-2, -1],  # Alice
         [25, 6],  # Bob
-        # [17, 4],  # Charlie
-        # [-15, -6],  # Diana
+        [17, 4],  # Charlie
+        [-15, -6],  # Diana
     ]
 )
 all_y_trues = np.array(
     [
         1,  # Alice
         0,  # Bob
-        # 0,  # Charlie
-        # 1,  # Diana
+        0,  # Charlie
+        1,  # Diana
     ]
 )
 

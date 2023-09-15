@@ -95,6 +95,19 @@ neural_net::neural_net(nn_structure_t structure_input)
   total_num_weights = w_cnt; // total number of weights in network
 }
 
+void neural_net::set_w_and_b_fixed(double val) {
+
+  for (int l = 1; l < num_layers; ++l) {
+    int l_idx = l - 1; // index transformation for weights (start index 0)
+    for (int to = 0; to < num_nodes[l]; ++to) {
+      nodes[l][to].b = val;
+      for (int from = 0; from < num_nodes[l - 1]; ++from) {
+        w[l_idx][to][from] = val;
+      }
+    }
+  }
+}
+
 void neural_net::forward_pass(std::vector<double> &input_vec) {
   // propagate the input data through the network
 
@@ -327,6 +340,7 @@ void neural_net::train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_dat
       if (m_data.upstr == update_strategy_t::immediate_update) {
         // online variant: update directly after each training pair
         update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
+        // update_w_and_b(m_data.learning_rate, 1);
       }
 
     } // batch loop
