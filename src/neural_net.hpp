@@ -103,11 +103,11 @@ struct neural_net {
   double get_partial_loss(std::vector<double> &target_vec);
 
   void train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_data);
-
-  void print_parameters(std::string_view tag);
-  void print_nodes(std::string_view tag);
-  void print_weights(std::string_view tag);
 };
+
+void print_parameters(std::string_view tag, neural_net const& nn);
+void print_nodes(std::string_view tag, neural_net const& nn);
+void print_weights(std::string_view tag, neural_net const& nn);
 
 a_func_ptr_t get_activation_func_ptr(a_func_t af);
 

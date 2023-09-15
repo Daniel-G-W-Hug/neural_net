@@ -374,21 +374,21 @@ void neural_net::train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_dat
   } // epoch loop
 }
 
-void neural_net::print_parameters(std::string_view tag) {
-  std::cout << "'" << tag << "' neural network with " << num_layers
+void print_parameters(std::string_view tag, neural_net const& nn) {
+  std::cout << "'" << tag << "' neural network with " << nn.num_layers
             << " layers:" << std::endl;
 
   // print number of nodes with user provided sizes only (leave out bias
   // nodes)
-  for (int l = 0; l < num_layers; ++l) {
-    std::cout << "layer " << l << " : " << num_nodes[l] << " nodes"
+  for (int l = 0; l < nn.num_layers; ++l) {
+    std::cout << "layer " << l << " : " << nn.num_nodes[l] << " nodes"
               << std::endl;
   }
-  std::cout << "number of nodes: " << total_num_nodes << std::endl;
-  std::cout << "total number of weights: " << total_num_weights << std::endl;
-  std::cout << "total number of bias values: " << total_num_bias << std::endl;
+  std::cout << "number of nodes: " << nn.total_num_nodes << std::endl;
+  std::cout << "total number of weights: " << nn.total_num_weights << std::endl;
+  std::cout << "total number of bias values: " << nn.total_num_bias << std::endl;
   std::cout << "total number of learning parameters: "
-            << total_num_weights + total_num_bias << std::endl;
+            << nn.total_num_weights + nn.total_num_bias << std::endl;
   std::cout << "+------------------------------------------------------"
                "-------+"
             << std::endl;
@@ -396,28 +396,28 @@ void neural_net::print_parameters(std::string_view tag) {
   return;
 }
 
-void neural_net::print_nodes(std::string_view tag) {
-  for (int l = 0; l < num_layers; ++l) {
+void print_nodes(std::string_view tag, neural_net const& nn) {
+  for (int l = 0; l < nn.num_layers; ++l) {
     std::cout << "'" << tag << "' - nodes layer " << l;
     if (l == 0) {
       std::cout << " (input layer):";
-    } else if (l == num_layers - 1) {
+    } else if (l == nn.num_layers - 1) {
       std::cout << " (ouput layer):";
     } else {
       std::cout << " (hidden layer):";
     }
     std::cout << std::endl;
-    for (int n = 0; n < num_nodes[l]; ++n) {
+    for (int n = 0; n < nn.num_nodes[l]; ++n) {
       std::cout << "  n: " << n << " nodes[" << l << "][" << n << "].a = ";
       std::cout.precision(5);
-      std::cout << nodes[l][n].a << ", .b = " << nodes[l][n].b
-                << ", .dLdb = " << nodes[l][n].dLdb
-                << ", .o = " << nodes[l][n].o
-                << ", .delta = " << nodes[l][n].delta;
+      std::cout << nn.nodes[l][n].a << ", .b = " << nn.nodes[l][n].b
+                << ", .dLdb = " << nn.nodes[l][n].dLdb
+                << ", .o = " << nn.nodes[l][n].o
+                << ", .delta = " << nn.nodes[l][n].delta;
       // std::cout << " &af = " << (void *)nodes[l][n].af;
       std::cout << std::endl;
     }
-    if (l < num_layers - 1) {
+    if (l < nn.num_layers - 1) {
       std::cout << std::endl;
     } else {
       std::cout << "+--------------------------------------------------"
@@ -428,10 +428,10 @@ void neural_net::print_nodes(std::string_view tag) {
   // std::cout << std::endl;
 }
 
-void neural_net::print_weights(std::string_view tag) {
-  for (int l = 1; l < num_layers; ++l) {
+void print_weights(std::string_view tag, neural_net const& nn) {
+  for (int l = 1; l < nn.num_layers; ++l) {
     std::cout << "'" << tag << "' - weights layer " << l;
-    if (l == num_layers - 1) {
+    if (l == nn.num_layers - 1) {
       std::cout << " (ouput layer):";
     } else {
       std::cout << " (hidden layer):";
@@ -441,22 +441,22 @@ void neural_net::print_weights(std::string_view tag) {
 
     // show to user as index l, while internally using the index
     // transformation
-    for (int to = 0; to < num_nodes[l]; ++to) {
-      for (int from = 0; from < num_nodes[l - 1]; ++from) {
+    for (int to = 0; to < nn.num_nodes[l]; ++to) {
+      for (int from = 0; from < nn.num_nodes[l - 1]; ++from) {
         std::cout << "    w[" << l << "][" << to << "][" << from << "] = ";
         std::cout.precision(5);
-        std::cout << w[l_idx][to][from] << std::endl;
+        std::cout << nn.w[l_idx][to][from] << std::endl;
       }
     }
     std::cout << std::endl;
-    for (int to = 0; to < num_nodes[l]; ++to) {
-      for (int from = 0; from < num_nodes[l - 1]; ++from) {
+    for (int to = 0; to < nn.num_nodes[l]; ++to) {
+      for (int from = 0; from < nn.num_nodes[l - 1]; ++from) {
         std::cout << "    dLdw[" << l << "][" << to << "][" << from << "] = ";
         std::cout.precision(5);
-        std::cout << dLdw[l_idx][to][from] << std::endl;
+        std::cout << nn.dLdw[l_idx][to][from] << std::endl;
       }
     }
-    if (l < num_layers - 1) {
+    if (l < nn.num_layers - 1) {
       std::cout << std::endl;
     } else {
       std::cout << "+--------------------------------------------------"
