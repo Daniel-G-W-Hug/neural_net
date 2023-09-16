@@ -54,7 +54,7 @@ neural_net::neural_net(nn_structure_t structure_input)
       if (n == num_nodes[l] - 1) {
         // for const input node used for bias calculation
         tmp_node.af = get_activation_func_ptr(a_func_t::identity);
-        tmp_node.a = 1.0;
+        tmp_node.z = 1.0;
       }
       tmp_nodes.push_back(tmp_node);
     }
@@ -109,7 +109,7 @@ void neural_net::set_w_fixed(double val) {
       }
     }
   }
-} // set_w_and_b_fixed
+} // set_w_fixed
 
 void neural_net::forward_pass(std::vector<double> &input_vec) {
   // propagate the input data through the network
@@ -117,10 +117,8 @@ void neural_net::forward_pass(std::vector<double> &input_vec) {
   // set input layer nodes to user provided values
   int l = 0; // input layer
   for (int to = 0; to < num_nodes[l] - 1; ++to) {
-    nodes[l][to].a = input_vec[to];
+    nodes[l][to].z = input_vec[to];
   }
-  // // set const output node for bias calculation
-  // nodes[l][num_nodes[l] - 1].a = 1.0;
 
   // forward pass through inner network layers starts at layer 1
   for (int l = 1; l < num_layers; ++l) {
@@ -129,15 +127,15 @@ void neural_net::forward_pass(std::vector<double> &input_vec) {
 
     // activate all nodes in previous layer to make output values available
     for (int from = 0; from < num_nodes[l - 1]; ++from) {
-      nodes[l - 1][from].o =
-          nodes[l - 1][from].af(nodes[l - 1][from].a, f_tag::f);
+      nodes[l - 1][from].a =
+          nodes[l - 1][from].af(nodes[l - 1][from].z, f_tag::f);
     }
 
     // calculate summed activation for all nodes (incl. node bias)
     for (int to = 0; to < num_nodes[l] - 1; ++to) {
-      nodes[l][to].a = 0.0;
+      nodes[l][to].z = 0.0;
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
-        nodes[l][to].a += w[l_idx][to][from] * nodes[l - 1][from].o;
+        nodes[l][to].z += w[l_idx][to][from] * nodes[l - 1][from].a;
       }
     }
   }
@@ -145,7 +143,7 @@ void neural_net::forward_pass(std::vector<double> &input_vec) {
   // activate all nodes in output layer to make output available
   l = num_layers - 1;
   for (int to = 0; to < num_nodes[l] - 1; ++to) {
-    nodes[l][to].o = nodes[l][to].af(nodes[l][to].a, f_tag::f);
+    nodes[l][to].a = nodes[l][to].af(nodes[l][to].z, f_tag::f);
   }
 
 } // forward_pass
@@ -163,7 +161,7 @@ neural_net::forward_pass_with_output(std::vector<double> &input_vec) {
 
   // copy output layer to output vector
   for (int to = 0; to < num_nodes[l] - 1; ++to) {
-    output_vec[to] = nodes[l][to].o;
+    output_vec[to] = nodes[l][to].a;
   }
 
   return output_vec;
@@ -177,8 +175,8 @@ void neural_net::backward_pass(std::vector<double> &input_vec,
   // calculate deltas in output layer
   int l = num_layers - 1;
   for (int to = 0; to < num_nodes[l] - 1; ++to) {
-    nodes[l][to].delta = (nodes[l][to].o - output_target_vec[to]) *
-                         nodes[l][to].af(nodes[l][to].a, f_tag::f1);
+    nodes[l][to].delta = (nodes[l][to].a - output_target_vec[to]) *
+                         nodes[l][to].af(nodes[l][to].z, f_tag::f1);
   }
 
   // calculate deltas in hidden layers
@@ -187,7 +185,7 @@ void neural_net::backward_pass(std::vector<double> &input_vec,
     for (int from = 0; from < num_nodes[l]; ++from) {
       for (int to = 0; to < num_nodes[l + 1] - 1; ++to) {
         nodes[l][from].delta = w[l_idx + 1][to][from] * nodes[l + 1][to].delta *
-                               nodes[l][from].af(nodes[l][from].a, f_tag::f1);
+                               nodes[l][from].af(nodes[l][from].z, f_tag::f1);
       }
     }
   }
@@ -197,7 +195,7 @@ void neural_net::backward_pass(std::vector<double> &input_vec,
     int l_idx = l - 1; // index transformation for weights (start index 0)
     for (int to = 0; to < num_nodes[l] - 1; ++to) {
       for (int from = 0; from < num_nodes[l - 1]; ++from) {
-        dLdw[l_idx][to][from] += nodes[l][to].delta * nodes[l - 1][from].o;
+        dLdw[l_idx][to][from] += nodes[l][to].delta * nodes[l - 1][from].a;
       }
     }
   }
@@ -247,7 +245,7 @@ double neural_net::get_partial_loss(std::vector<double> &output_target_vec) {
   int l = num_layers - 1;
   double partial_loss;
   for (int to = 0; to < num_nodes[l] - 1; ++to) {
-    partial_loss = std::pow(nodes[l][to].o - output_target_vec[to], 2.0);
+    partial_loss = std::pow(nodes[l][to].a - output_target_vec[to], 2.0);
   }
   // partial loss L_n for the given training pair
   return 0.5 * partial_loss;

@@ -44,12 +44,13 @@ struct nn_node_t {
   // training is done by given pairs (x, y) - x and y can be vectors
   // in each layer l=0..num_layers-1 there are num_nodes[l]
 
-  double a{0.0}; // input side of node (=activation)
+  double z{0.0}; // input side of node (=activation)
                  // either gets direct input (for input layer)
                  // or gets weighted sum of inputs of previous layer
+                 // z = sum(w*a), includes bias via const output node 
 
-  double o{0.0}; // output side of node; gets its value after applying the
-                 // activation function o = af(sum_prev_layer(a*x) + b)
+  double a{0.0}; // output side of node; gets its value after applying the
+                 // activation function a = af(sum_prev_layer(w*x) + b) = af(z)
 
   double delta{0.0}; // storage for backpropagation
 
@@ -81,7 +82,7 @@ struct neural_net {
   // indexing: l_idx = layer - 1 (layer starts a 0, weights at 1)
   // w[l_idx][to_node in l][from_node in l-1]
   // layout optimized for scalar product in sum over activations coming from
-  // nodes in previous layer: sum of w[l][to][from]*nodes[l-1][from].o
+  // nodes in previous layer: sum of w[l][to][from]*nodes[l-1][from].a
   // for fast calculation of forward pass in applications of trained net
 
   int total_num_weights; // total number of weights in network

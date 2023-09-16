@@ -36,9 +36,9 @@ void print_nodes(std::string_view tag, neural_net const &nn) {
     }
     std::cout << std::endl;
     for (int n = 0; n < nn.num_nodes[l]; ++n) {
-      std::cout << "  n: " << n << " nodes[" << l << "][" << n << "].a = ";
+      std::cout << "  n: " << n << " nodes[" << l << "][" << n << "].z = ";
       std::cout.precision(5);
-      std::cout << nn.nodes[l][n].a << ", .o = " << nn.nodes[l][n].o
+      std::cout << nn.nodes[l][n].z << ", .a = " << nn.nodes[l][n].a
                 << ", .delta = " << nn.nodes[l][n].delta;
       // std::cout << " &af = " << (void *)nodes[l][n].af;
       std::cout << std::endl;
