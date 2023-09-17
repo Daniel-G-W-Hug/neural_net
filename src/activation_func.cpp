@@ -2,98 +2,133 @@
 #include "activation_func.hpp"
 
 #include <cmath>
+#include <cstddef> // std::size_t
+
+#include <iostream>
 
 // activation functions
-double identity(double x, f_tag tag) {
+std::vector<double> identity(std::vector<double> const &x, f_tag tag) {
+
+  std::size_t dim = x.size();
+  std::vector<double> y(dim);
 
   switch (tag) {
 
   case f_tag::f:
-    return x;
-    break;
-
-  case f_tag::f1:
-    return 1.0;
-    break;
-  }
-}
-
-double sigmoid(double x, f_tag tag) {
-
-  switch (tag) {
-
-  case f_tag::f:
-
-    return 1.0 / (1.0 + exp(-x));
-    break;
-
-  case f_tag::f1:
-
-    double val = 1.0 / (1.0 + exp(-x));
-    return val * (1.0 - val);
-    break;
-  }
-}
-
-double tanhyp(double x, f_tag tag) {
-
-  switch (tag) {
-
-  case f_tag::f:
-
-    return 2.0 / (1.0 + exp(-2.0 * x)) - 1.0;
-    break;
-
-  case f_tag::f1:
-
-    double val = 2.0 / (1.0 + exp(-2.0 * x)) - 1.0;
-    return 1.0 - val * val;
-    break;
-  }
-}
-
-double reLU(double x, f_tag tag) {
-
-  switch (tag) {
-
-  case f_tag::f:
-    if (x < 0.0) {
-      return 0.0;
-    } else {
-      return x;
+    for (std::size_t n = 0; n < dim; ++n) {
+      y[n] = x[n];
     }
     break;
 
   case f_tag::f1:
-    if (x < 0.0) {
-      return 0.0;
-    } else {
-      return 1.0;
+    for (std::size_t n = 0; n < dim; ++n) {
+      y[n] = 1.0;
     }
     break;
   }
+
+  return y;
 }
 
-double leaky_reLU(double x, f_tag tag) {
+std::vector<double> sigmoid(std::vector<double> const &x, f_tag tag) {
+
+  std::size_t dim = x.size();
+  std::vector<double> y(dim);
 
   switch (tag) {
 
   case f_tag::f:
-    if (x < 0.0) {
-      return 0.01 * x;
-    } else {
-      return x;
+    for (std::size_t n = 0; n < dim; ++n) {
+      y[n] = 1.0 / (1.0 + exp(-x[n]));
     }
     break;
 
   case f_tag::f1:
-    if (x < 0.0) {
-      return 0.01;
-    } else {
-      return 1.0;
+
+    for (std::size_t n = 0; n < dim; ++n) {
+      double val = 1.0 / (1.0 + exp(-x[n]));
+      y[n] = val * (1.0 - val);
     }
     break;
   }
+
+  return y;
+}
+
+std::vector<double> tanhyp(std::vector<double> const &x, f_tag tag) {
+
+  std::size_t dim = x.size();
+  std::vector<double> y(dim);
+
+  switch (tag) {
+
+  case f_tag::f:
+
+    for (std::size_t n = 0; n < dim; ++n) {
+      y[n] = 2.0 / (1.0 + exp(-2.0 * x[n])) - 1.0;
+    }
+    break;
+
+  case f_tag::f1:
+
+    for (std::size_t n = 0; n < dim; ++n) {
+      double val = 2.0 / (1.0 + exp(-2.0 * x[n])) - 1.0;
+      y[n] = 1.0 - val * val;
+    }
+    break;
+  }
+
+  return y;
+}
+
+std::vector<double> reLU(std::vector<double> const &x, f_tag tag) {
+
+  std::size_t dim = x.size();
+  std::vector<double> y(dim);
+
+  switch (tag) {
+
+  case f_tag::f:
+
+    for (std::size_t n = 0; n < dim; ++n) {
+      y[n] = (x[n] < 0.0) ? 0.0 : x[n];
+    }
+    break;
+
+  case f_tag::f1:
+
+    for (std::size_t n = 0; n < dim; ++n) {
+      y[n] = (x[n] < 0.0) ? 0.0 : 1.0;
+    }
+    break;
+  }
+
+  return y;
+}
+
+std::vector<double> leaky_reLU(std::vector<double> const &x, f_tag tag) {
+
+  std::size_t dim = x.size();
+  std::vector<double> y(dim);
+
+  switch (tag) {
+
+  case f_tag::f:
+
+    for (std::size_t n = 0; n < dim; ++n) {
+      y[n] = (x[n] < 0.0) ? 0.01 * x[n] : x[n];
+    }
+    break;
+
+  case f_tag::f1:
+
+    for (std::size_t n = 0; n < dim; ++n) {
+      y[n] = (x[n] < 0.0) ? 0.01 : 1.0;
+    }
+    break;
+  }
+
+  return y;
 }
 
 a_func_ptr_t get_activation_func_ptr(a_func_t af) {

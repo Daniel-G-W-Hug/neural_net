@@ -3,6 +3,7 @@
 
 #include "activation_func.hpp"
 
+#include <cstddef> // std::size_t
 #include <random>
 #include <string_view>
 #include <vector>
@@ -19,15 +20,15 @@ enum class update_strategy_t {
 
 struct nn_structure_t {
 
-  std::vector<int> net_structure; // number of nodes for each layer
+  std::vector<std::size_t> net_structure; // number of nodes for each layer
 
   a_func_t af_h; // chosen activation function for hidden layers
   a_func_t af_o; // chosen activation function for output layer
 };
 struct nn_training_meta_data_t {
 
-  int epochmax;          // max. number of iterations over the whole data set
-  int epoch_output_skip; // output if epoch%epoch_output_skip == 0
+  std::size_t epochmax; // max. number of iterations over the whole data set
+  std::size_t epoch_output_skip; // output if epoch%epoch_output_skip == 0
 
   double learning_rate;   // chosen learning rate for gradient descent
   double min_target_loss; // minimum loss in training to stop prescribed
@@ -35,72 +36,74 @@ struct nn_training_meta_data_t {
   double min_relative_loss_change_rate; // stop iteration, if loss change
                                         // becomes too small between epochs
 
-  update_strategy_t upstr; // update strategy for gradient descent
-  int mini_batch_size;     // number of training pairs for mini batch
+  update_strategy_t upstr;     // update strategy for gradient descent
+  std::size_t mini_batch_size; // number of training pairs for mini batch
 };
 
-struct nn_node_t {
+struct nn_layer_t {
 
-  // training is done by given pairs (x, y) - x and y can be vectors
-  // in each layer l=0..num_layers-1 there are num_nodes[l]
+  // training is done by given pairs (x, y); x and y can be vectors
+  // in each layer l=0..num_layers-1 there are num_nodes[l] node entries
 
-  double z{0.0}; // input side of node (=activation)
-                 // either gets direct input (for input layer)
-                 // or gets weighted sum of inputs of previous layer
-                 // z = sum(w*a), includes bias via const output node 
+  std::vector<double> z; // input side of nodes
+  // either gets direct input (for input layer)
+  // or gets weighted sum of inputs of previous layer + bias
+  // z[to] = sum_from( layer[l].w[to][from]*.layer[l-1].a[from] ) + b[to]
 
-  double a{0.0}; // output side of node; gets its value after applying the
-                 // activation function a = af(sum_prev_layer(w*x) + b) = af(z)
+  std::vector<double> b;    // bias value of nodes
+  std::vector<double> dLdb; // gradient of bias of nodes
 
-  double delta{0.0}; // storage for backpropagation
+  std::vector<double> a; // output side of nodes (=activation)
+                         // gets its value after applying the
+                         // activation function a = af(z)
 
-  a_func_ptr_t af{nullptr}; // ptr to activation function
+  std::vector<double> delta; // storage for backpropagation
+
+  a_func_ptr_t af; // ptr to activation function
+
+  using weight_matrix_t = std::vector<std::vector<double>>;
+  weight_matrix_t w;    // weight matrix
+  weight_matrix_t dLdw; // delta of loss function L depending on weights w
+  // w[to_node in l][from_node in l-1]
+  // layout optimized for scalar product in sum over activations coming from
+  // nodes in previous layer: sum of layer[l].w[to][from]*layer[l-1][from].a
+  // for fast calculation of forward pass in applications of trained net
 };
 
 struct neural_net {
 
   nn_structure_t m_structure;
 
-  int num_layers; // number of layers in neural_net:
-                  // l == 0: input layer
-                  // (l > 1) && (l < num_layers - 1): hidden layer
-                  // l == num_layers-1: output layer
+  std::size_t num_layers; // number of layers in neural_net:
+                          // l == 0: input layer
+                          // (l > 1) && (l < num_layers - 1): hidden layer
+                          // l == num_layers-1: output layer
 
-  std::vector<int> num_nodes; // number of nodes in each layer
-  int total_num_nodes{0};     // total number of nodes
+  std::vector<std::size_t> num_nodes; // number of nodes in each layer
+  std::size_t total_num_nodes{0};     // total number of nodes
+  std::size_t total_num_bias{0};      // total number of adjustable bias
+                                      // values for gradient descent
+  std::size_t total_num_weights{0};   // total number of weights in network
 
-  int total_num_bias{0}; // total number of adjustable bias
-                         // values for gradient descent
-
-  using node_matrix_t = std::vector<std::vector<nn_node_t>>;
-  using weight_matrix_t = std::vector<std::vector<std::vector<double>>>;
-
-  node_matrix_t nodes;  // vector of nodes in each layer
-  weight_matrix_t w;    // weight matrix
-  weight_matrix_t dLdw; // delta of loss function L depending on weights w
-                        // (used for backpropagation)
-  // indexing: l_idx = layer - 1 (layer starts a 0, weights at 1)
-  // w[l_idx][to_node in l][from_node in l-1]
-  // layout optimized for scalar product in sum over activations coming from
-  // nodes in previous layer: sum of w[l][to][from]*nodes[l-1][from].a
-  // for fast calculation of forward pass in applications of trained net
-
-  int total_num_weights; // total number of weights in network
+  using layer_t = std::vector<nn_layer_t>;
+  layer_t layer;
 
   neural_net(nn_structure_t structure_input);
-  void set_w_fixed(double val);
+  void set_w_and_b_fixed(double val);
 
-  void forward_pass(std::vector<double> &input_vec);
-  std::vector<double> forward_pass_with_output(std::vector<double> &input_vec);
+  void forward_pass(std::vector<double> const &input_vec);
+  std::vector<double>
+  forward_pass_with_output(std::vector<double> const &input_vec);
 
-  void backward_pass(std::vector<double> &input_vec,
-                     std::vector<double> &target_vec);
+  void backward_pass(std::vector<double> const &input_vec,
+                     std::vector<double> const &target_vec);
 
-  void reset_dLdw_to_zero();
-  void update_w(double learn_rate, int num_samples);
-  double get_partial_loss(std::vector<double> &target_vec);
+  void reset_dLdw_and_dLdb_to_zero();
+  void update_w_and_b(double learn_rate, std::size_t num_samples);
+  double get_partial_loss(std::vector<double> const &target_vec);
 
-  void train(f_data_t &fd, f_data_t &td, nn_training_meta_data_t m_data);
+  void train(f_data_t const &fd, f_data_t const &td,
+             nn_training_meta_data_t m_data);
 };
 
 #endif // NEURAL_NET_HPP

@@ -7,11 +7,11 @@
 #include <string>
 #include <vector>
 
-std::tuple<int, std::stringstream> get_next_line(std::ifstream &ifs) {
+std::tuple<std::size_t, std::stringstream> get_next_line(std::ifstream &ifs) {
 
   // for reading the file
   std::string line;
-  static int line_number;
+  static std::size_t line_number;
 
   // read line by line (ignore comment lines)
   while (std::getline(ifs, line)) {
@@ -36,13 +36,14 @@ std::tuple<int, std::stringstream> get_next_line(std::ifstream &ifs) {
       std::to_string(line_number) + ".\n");
 }
 
-std::tuple<nn_structure_t, nn_training_meta_data_t> read_training_cfg(std::string_view fname) {
+std::tuple<nn_structure_t, nn_training_meta_data_t>
+read_training_cfg(std::string_view fname) {
 
   nn_structure_t m_structure;
   nn_training_meta_data_t m_data;
 
   std::ifstream ifs(fname);
-  int line_no;
+  std::size_t line_no;
   std::stringstream iss;
 
   int int_in;
@@ -177,7 +178,7 @@ std::tuple<nn_structure_t, nn_training_meta_data_t> read_training_cfg(std::strin
   return std::make_tuple(m_structure, m_data);
 }
 
-f_data_t read_f_data(std::string_view fname, int assert_size) {
+f_data_t read_f_data(std::string_view fname, std::size_t assert_size) {
   // read file consisting of rows of csv data (same amount of data in each
   // row)
 
@@ -188,13 +189,13 @@ f_data_t read_f_data(std::string_view fname, int assert_size) {
 
     // for detection of different number of items per line
     std::once_flag flag;
-    int items_per_line_current, items_per_line;
+    std::size_t items_per_line_current, items_per_line;
 
     // for reading the file
     std::string line;
     double in;
     char ch;
-    int line_number{0};
+    std::size_t line_number{0};
 
     // read line by line
     while (std::getline(ifs, line)) {
@@ -249,14 +250,14 @@ void print_f_data(std::string_view tag, f_data_t &fd) {
 
   std::cout << "'" << tag << "':" << std::endl;
 
-  int line_cnt{0};
+  std::size_t line_cnt{0};
 
   for (auto &line : fd) {
     ++line_cnt;
 
     std::cout << "  " << line_cnt << ": ";
-    int items = line.size();
-    for (int i = 0; i < items; ++i) {
+    std::size_t items = line.size();
+    for (std::size_t i = 0; i < items; ++i) {
       if (i < items - 1) {
         std::cout << line[i] << ", ";
       } else {

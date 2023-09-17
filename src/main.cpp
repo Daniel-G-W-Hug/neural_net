@@ -41,10 +41,10 @@ int main(int argc, char *argv[]) {
 
     neural_net nn(nn_structure);
 
-    nn.set_w_fixed(1.0);
+    // nn.set_w_and_b_fixed(1.0);
 
-    f_data_t fd = read_f_data(f_training, nn.num_nodes[0] - 1);
-    f_data_t td = read_f_data(f_target, nn.num_nodes[nn.num_layers - 1] - 1);
+    f_data_t fd = read_f_data(f_training, nn.num_nodes[0]);
+    f_data_t td = read_f_data(f_target, nn.num_nodes[nn.num_layers - 1]);
 
     print_f_data("training data", fd);
     print_f_data("training target data", td);
