@@ -268,7 +268,8 @@ void neural_net::train(f_data_t const &fd, f_data_t const &td,
       num_training_data_sets_batch = total_num_training_data_sets;
     }
     std::cout << "update strategy: mini batch,"
-              << " batch size: " << num_training_data_sets_batch << "\n\n";
+              << " batch size: " << num_training_data_sets_batch
+              << ", number of batch iterations: " << num_batch_iter << "\n\n";
 
     index_vec.resize(num_training_data_sets_batch);
     // acutal random indices will be assigned in mini batch loop
