@@ -87,7 +87,7 @@ neural_net::neural_net(nn_structure_t structure_input)
   }
 
   // set loss function
-  lf = get_loss_func_ptr(m_structure.lf);
+  lossf = get_loss_func_ptr(m_structure.lossf);
 
 } // neural_net (ctor)
 
@@ -163,7 +163,7 @@ void neural_net::backward_pass(std::vector<double> const &input_vec,
 
     for (std::size_t to = 0; to < num_nodes[l]; ++to) {
       layer[l].delta[to] =
-          lf(layer[l].a[to], output_target_vec[to], f_tag::f1) * af1[to];
+          lossf(layer[l].a[to], output_target_vec[to], f_tag::f1) * af1[to];
     }
   }
 
@@ -226,7 +226,7 @@ neural_net::get_partial_loss(std::vector<double> const &output_target_vec) {
   //
   // REQUIRES:
   // forward_pass was done with input vector corresponding to
-  // output_target_vec (i.e. neural_net is up-to-date w.r.t. the input vector)
+  // output_target_vec (i.e. neural_net is up-to-date w.r.t. the training pair)
   //
   // RETURN:
   // partial loss L_n for the training pair for given output_target_vec
@@ -234,7 +234,7 @@ neural_net::get_partial_loss(std::vector<double> const &output_target_vec) {
   std::size_t l = num_layers - 1;
   double partial_loss{0.0};
   for (std::size_t to = 0; to < num_nodes[l]; ++to) {
-    partial_loss += lf(layer[l].a[to], output_target_vec[to], f_tag::f);
+    partial_loss += lossf(layer[l].a[to], output_target_vec[to], f_tag::f);
   }
   // partial loss L_n for the given training pair
   return partial_loss;
@@ -252,6 +252,7 @@ void neural_net::train(f_data_t const &fd, f_data_t const &td,
 
   std::uniform_int_distribution<> i_dist(0, total_num_training_data_sets - 1);
   std::size_t num_training_data_sets_batch;
+  std::size_t num_batch_iter{1}; // default, update for mini_batch only
   std::vector<std::size_t> index_vec;
 
   if (m_data.upstr == update_strategy_t::mini_batch_update) {
@@ -259,7 +260,11 @@ void neural_net::train(f_data_t const &fd, f_data_t const &td,
     // limit mini_batch_size to total size of training data set
     if (m_data.mini_batch_size <= total_num_training_data_sets) {
       num_training_data_sets_batch = m_data.mini_batch_size;
+      // number of iterations for full epoch
+      num_batch_iter =
+          total_num_training_data_sets / num_training_data_sets_batch;
     } else {
+      // just in case the user requires too large mini_batch_size
       num_training_data_sets_batch = total_num_training_data_sets;
     }
     std::cout << "update strategy: mini batch,"
@@ -294,47 +299,52 @@ void neural_net::train(f_data_t const &fd, f_data_t const &td,
     }
     total_loss = 0.0;
 
-    if (m_data.upstr == update_strategy_t::mini_batch_update) {
-      // select the minibatch subset of samples for this epoch
-      for (std::size_t i = 0; i < num_training_data_sets_batch; ++i) {
-        index_vec[i] = i_dist(gen);
-      }
-      // std::cout << "selected indices of batch : [ ";
-      // for (std::size_t i = 0; i < num_training_data_sets_batch; ++i) {
-      //   if (i < num_training_data_sets_batch - 1) {
-      //     std::cout << index_vec[i] << ", ";
-      //   } else {
-      //     std::cout << index_vec[i] << " ]\n";
-      //   }
-      // }
-    }
+    // mini batch iteration (num_batch_iter == 1 for most other cases)
+    for (std::size_t mb_iter = 0; mb_iter < num_batch_iter; ++mb_iter) {
 
-    // for each training pair in training batch do the learning cycle via
-    // gradient calculation and weight and bias adaptation
-    for (std::size_t n = 0; n < num_training_data_sets_batch; ++n) {
-
-      if (m_data.upstr == update_strategy_t::immediate_update) {
-        // online variant: update directly after each training pair
-        reset_dLdw_and_dLdb_to_zero();
+      if (m_data.upstr == update_strategy_t::mini_batch_update) {
+        // select the minibatch subset of samples
+        for (std::size_t i = 0; i < num_training_data_sets_batch; ++i) {
+          index_vec[i] = i_dist(gen);
+        }
+        // std::cout << "selected indices of batch : [ ";
+        // for (std::size_t i = 0; i < num_training_data_sets_batch; ++i) {
+        //   if (i < num_training_data_sets_batch - 1) {
+        //     std::cout << index_vec[i] << ", ";
+        //   } else {
+        //     std::cout << index_vec[i] << " ]\n";
+        //   }
+        // }
       }
 
-      // select the next training pair
-      std::vector<double> input_vec{fd[index_vec[n]]};
-      std::vector<double> target_output_vec{td[index_vec[n]]};
+      // for each training pair in training batch do the learning cycle via
+      // gradient calculation and weight and bias adaptation
+      for (std::size_t n = 0; n < num_training_data_sets_batch; ++n) {
 
-      forward_pass(input_vec);
-      total_loss +=
-          get_partial_loss(target_output_vec) / num_training_data_sets_batch;
+        if (m_data.upstr == update_strategy_t::immediate_update) {
+          // online variant: update directly after each training pair
+          reset_dLdw_and_dLdb_to_zero();
+        }
 
-      backward_pass(input_vec, target_output_vec);
+        // select the next training pair
+        std::vector<double> input_vec{fd[index_vec[n]]};
+        std::vector<double> target_output_vec{td[index_vec[n]]};
 
-      if (m_data.upstr == update_strategy_t::immediate_update) {
-        // online variant: update directly after each training pair
-        update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
-        // update_w_and_b(m_data.learning_rate, 1);
-      }
+        forward_pass(input_vec);
+        total_loss +=
+            get_partial_loss(target_output_vec) / num_training_data_sets_batch;
 
-    } // batch loop
+        backward_pass(input_vec, target_output_vec);
+
+        if (m_data.upstr == update_strategy_t::immediate_update) {
+          // online variant: update directly after each training pair
+          update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
+          // update_w_and_b(m_data.learning_rate, 1);
+        }
+
+      } // batch loop
+
+    } // mini batch iteration
 
     if (m_data.upstr != update_strategy_t::immediate_update) {
       // offline variant: update after the corresponding batch of
