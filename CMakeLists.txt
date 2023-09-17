@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.25)
 
+### THIS HAS TO COME BEFORE THE PROJECT LINE
+# set(CMAKE_C_COMPILER "gcc-13")
+# set(CMAKE_CXX_COMPILER "g++-13")
+### THIS HAS TO COME BEFORE THE PROJECT LINE
+
 project(nn_simple
         VERSION 0.0.1
         LANGUAGES CXX)
