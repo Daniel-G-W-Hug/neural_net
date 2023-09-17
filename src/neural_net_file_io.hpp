@@ -1,5 +1,5 @@
-#ifndef READ_DATA_HPP
-#define READ_DATA_HPP
+#ifndef NEURAL_NET_FILE_IO_HPP
+#define NEURAL_NET_FILE_IO_HPP
 
 #include "neural_net.hpp"
 
@@ -15,4 +15,4 @@ read_training_cfg(std::string_view fname);
 f_data_t read_f_data(std::string_view fname, std::size_t assert_size);
 void print_f_data(std::string_view tag, f_data_t &fd);
 
-#endif // READ_DATA_HPP
+#endif // NEURAL_NET_FILE_IO_HPP

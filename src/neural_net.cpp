@@ -86,6 +86,9 @@ neural_net::neural_net(nn_structure_t structure_input)
     }
   }
 
+  // set loss function
+  lf = get_loss_func_ptr(m_structure.lf);
+
 } // neural_net (ctor)
 
 void neural_net::set_w_and_b_fixed(double val) {
@@ -159,7 +162,8 @@ void neural_net::backward_pass(std::vector<double> const &input_vec,
     af1 = layer[l].af(layer[l].z, f_tag::f1);
 
     for (std::size_t to = 0; to < num_nodes[l]; ++to) {
-      layer[l].delta[to] = (layer[l].a[to] - output_target_vec[to]) * af1[to];
+      layer[l].delta[to] =
+          lf(layer[l].a[to], output_target_vec[to], f_tag::f1) * af1[to];
     }
   }
 
@@ -224,22 +228,16 @@ neural_net::get_partial_loss(std::vector<double> const &output_target_vec) {
   // forward_pass was done with input vector corresponding to
   // output_target_vec (i.e. neural_net is up-to-date w.r.t. the input vector)
   //
-  // RETURNS:
+  // RETURN:
   // partial loss L_n for the training pair for given output_target_vec
-  //
-  // total loss L = 1/N*sum(1..N)( 0.5*(y_actual - y_target)^2 )
-  //              = 1/N*sum(1..N)(L_n)
-  //
-  // (factor 0.5 was chosen to simplify derivatives dEdw and dEdb)
 
   std::size_t l = num_layers - 1;
   double partial_loss{0.0};
-
   for (std::size_t to = 0; to < num_nodes[l]; ++to) {
-    partial_loss += std::pow(layer[l].a[to] - output_target_vec[to], 2.0);
+    partial_loss += lf(layer[l].a[to], output_target_vec[to], f_tag::f);
   }
   // partial loss L_n for the given training pair
-  return 0.5 * partial_loss;
+  return partial_loss;
 } // get_partial_loss
 
 void neural_net::train(f_data_t const &fd, f_data_t const &td,

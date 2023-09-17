@@ -1,5 +1,5 @@
 
-#include "activation_func.hpp"
+#include "neural_net_func.hpp"
 
 #include <cmath>
 #include <cstddef> // std::size_t
@@ -131,6 +131,27 @@ std::vector<double> leaky_reLU(std::vector<double> const &x, f_tag tag) {
   return y;
 }
 
+double mean_squared_error(double output, double output_target, f_tag tag) {
+
+  double loss{0.0};
+
+  switch (tag) {
+
+  case f_tag::f:
+
+    // scaling factor 0.5 is chosen to simplify the derivative calculation
+    loss = 0.5 * std::pow(output - output_target, 2.0);
+    break;
+
+  case f_tag::f1:
+
+    loss = output - output_target;
+    break;
+  }
+
+  return loss;
+}
+
 a_func_ptr_t get_activation_func_ptr(a_func_t af) {
   switch (af) {
   case (a_func_t::identity):
@@ -147,6 +168,14 @@ a_func_ptr_t get_activation_func_ptr(a_func_t af) {
     break;
   case (a_func_t::leaky_reLU):
     return &leaky_reLU;
+    break;
+  }
+}
+
+l_func_ptr_t get_loss_func_ptr(l_func_t lf) {
+  switch (lf) {
+  case (l_func_t::mse):
+    return &mean_squared_error;
     break;
   }
 }
