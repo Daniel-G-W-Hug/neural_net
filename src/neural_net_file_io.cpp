@@ -1,5 +1,6 @@
 #include "neural_net_file_io.hpp"
 
+#include <cassert>
 #include <iostream>
 #include <mutex> // once_flag
 #include <sstream>
@@ -37,7 +38,7 @@ std::tuple<std::size_t, std::stringstream> get_next_line(std::ifstream &ifs) {
 }
 
 std::tuple<nn_structure_t, nn_training_meta_data_t>
-read_training_cfg(std::string_view fname) {
+read_training_cfg(std::string const& fname) {
 
   nn_structure_t m_structure;
   nn_training_meta_data_t m_data;
@@ -178,7 +179,7 @@ read_training_cfg(std::string_view fname) {
   return std::make_tuple(m_structure, m_data);
 }
 
-f_data_t read_f_data(std::string_view fname, std::size_t assert_size) {
+f_data_t read_f_data(std::string const& fname, std::size_t assert_size) {
   // read file consisting of rows of csv data (same amount of data in each
   // row)
 
@@ -246,7 +247,7 @@ f_data_t read_f_data(std::string_view fname, std::size_t assert_size) {
   return file_data;
 }
 
-void print_f_data(std::string_view tag, f_data_t &fd) {
+void print_f_data(std::string const& tag, f_data_t &fd) {
 
   std::cout << "'" << tag << "':" << std::endl;
 

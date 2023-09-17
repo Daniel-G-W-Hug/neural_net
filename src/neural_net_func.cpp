@@ -3,8 +3,8 @@
 
 #include <cmath>
 #include <cstddef> // std::size_t
-
 #include <iostream>
+#include <utility> // std::unreachable()
 
 // activation functions
 std::vector<double> identity(std::vector<double> const &x, f_tag tag) {
@@ -169,7 +169,11 @@ a_func_ptr_t get_activation_func_ptr(a_func_t af) {
   case (a_func_t::leaky_reLU):
     return &leaky_reLU;
     break;
+  default:
+    std::unreachable();
+    break;
   }
+  std::unreachable();
 }
 
 l_func_ptr_t get_loss_func_ptr(l_func_t lf) {
@@ -177,5 +181,9 @@ l_func_ptr_t get_loss_func_ptr(l_func_t lf) {
   case (l_func_t::mse):
     return &mean_squared_error;
     break;
+  default:
+    std::unreachable();
+    break;
   }
+  std::unreachable();
 }

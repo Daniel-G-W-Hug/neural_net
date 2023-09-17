@@ -4,7 +4,7 @@ project(nn_simple
         VERSION 0.0.1
         LANGUAGES CXX)
         
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 # set a default build type: Debug | RelWithDebInfo | Release | MinSizeRel
 if(NOT CMAKE_BUILD_TYPE)
