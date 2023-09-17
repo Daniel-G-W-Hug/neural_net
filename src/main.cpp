@@ -2,8 +2,8 @@
 //
 // Daniel Hug, 08/2023
 
-#include "file_io.hpp"
 #include "neural_net.hpp"
+#include "neural_net_file_io.hpp"
 #include "neural_net_print.hpp"
 
 // uncomment to disable assert()

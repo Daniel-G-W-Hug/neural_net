@@ -1,7 +1,7 @@
 #ifndef NEURAL_NET_HPP
 #define NEURAL_NET_HPP
 
-#include "activation_func.hpp"
+#include "neural_net_func.hpp"
 
 #include <cstddef> // std::size_t
 #include <random>
