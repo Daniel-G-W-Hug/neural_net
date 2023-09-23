@@ -1,9 +1,10 @@
 \subsection{Neural Net Definitions}
 
-In this document we look into a neural network based on perceptron cells with an
-activation function. A single perception can be regarded as a linear classifier, i.e. it
-is able to output which of two linearly separable data sets a point belongs to. In order
-to classify more complex data sets, layers of perceptrons are required.
+Here we look into a neural network based on perceptron cells with an activation function.
+A single perception can be regarded as a linear classifier, i.e. it is able to output
+which of two linearly separable data sets a given point belongs to. In order to classify
+more complex data sets, layers of perceptrons with non-linear activation functions are
+required.
 
 \begin{figure}[h] \centering
     \includegraphics[width=0.75\textwidth]{neural_network} \caption{A fully
@@ -68,21 +69,36 @@ Following values are used to define the network:
     layers or $a^{L-1}_t = f_o(z^{L-1}_t)$ for the output layer. The activation function
     for the input layer is the identity function in the implementation.
 
-    \item $y^{L-1}_t$ is the output component at the index $t$ in the output layer at the
+    \item $a^{L-1}_t$ is the output component at the index $t$ in the output layer at the
     given input $\vec{x}_i$. The intended output is defined by $\vec{y}_i$ as second part
-    of the training pair $(\vec{x}_i, \vec{y}_i)$.
+    of the training pair $(\vec{x}_i, \vec{y}_i)$, where $y_t$ is component $t$ of
+    $\vec{y}_i$.
 \end{itemize}
 
-The activation function is chosen to fit the needs of the application. The nodes in the
+The activation functions are chosen to fit the needs of the application. The nodes in the
 \underline{h}idden layers $l=1$ up to $l=L-2$ have an activation function $f_h$ while the
 nodes in the \underline{o}utput layer $(l=L-1)$ might have another acitivation function
 $f_o$. \\
 
-The goal of training of the network is to minimize the loss function and thus to minimize
-the remaining error for a given set of training data. Gradient descent is used to reduce
-the error during training.\\
+The loss function is also chosen as best fit the to problem at hand. The goal of training
+of the network is to minimize the loss function and thus to minimize the remaining error
+for a given set of training data. Gradient descent is used to reduce the error during
+training. A typical example of a loss function is the quadratic cost function (mean
+squared error with additional factor of $frac{1}{2}$ to make the derivative calculation
+easier).
+\begin{equation}
+    L(X,\theta) = \frac{1}{2N} \sum_{t=0}^{N-1}{\lVert a^{L-1}_t - y_t \rVert^2} = \frac{1}{2N} \sum_{t=0}^{N-1}{(a^{L-1}_t - y_t)^2}
+\end{equation}
+In order to minimize the loss function, we need to understand how the deviation of the
+actual output to the desired output depends on the choice of learning parameters $\theta$,
+i.e. the weights $w$ and the bias values $b$. In order to minimize the the loss function,
+and thus the deviation between acutal and desired output, they have to be changed in a
+direction against the gradient of the function $L$. This requires to calculate all partial
+derivatives of the loss function with respect to the weights $\pd{L}{w}$ and with respect
+to the biases $\pd{L}{b}$.\\
 
-To define gradient descent we...
+To understand why this is the case let's consider:
+
 
 % \emph{Basis transformation:} The basis vectors of the new system expressed as a linear
 % combination of the basis vectors of the old system is considered a forward transformation.
