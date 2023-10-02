@@ -6,11 +6,10 @@ which of two linearly separable data sets a given point belongs to. In order to 
 more complex data sets, layers of perceptrons with non-linear activation functions are
 required.
 
-\begin{figure}[h] \centering
-    \includegraphics[width=0.75\textwidth]{neural_network} \caption{A fully
-    connected multi-layer neural network with three inputs, two
-    hidden layers, each with four perceptron nodes and an output layer with a
-    single output node. (Source: https://towardsdatascience.com)} \label{fig:neural_network}
+\begin{figure}[h] \centering \includegraphics[width=0.75\textwidth]{neural_network}
+    \caption{A fully connected multi-layer neural network with three inputs, two hidden
+    layers, each with four perceptron nodes and an output layer with a single output node.
+    (Source: \url{https://towardsdatascience.com})} \label{fig:neural_network}
 \end{figure}
 
 A neural net consists of $L$ layers with $n^l$ nodes in each layer $l=[0,L)$. For the
@@ -20,7 +19,7 @@ consist of perceptron nodes (see figure~\ref{fig:percptron}). \\
 A perceptron with an arbitrary activation function looks like this:
 \begin{figure}[h] \centering \includegraphics[width=0.75\textwidth]{single_neuron}
     \caption{A node of a neural network with inputs, bias and activiation function.
-    (Source: https://towardsai.net)}
+    (Source: \url{https://towardsai.net})}
     \label{fig:percptron}
 \end{figure}
 
@@ -75,101 +74,76 @@ Following values are used to define the network:
     $\vec{y}_i$.
 \end{itemize}
 
-The activation functions are chosen to fit the needs of the application. The nodes in the
-\underline{h}idden layers $l=1$ up to $l=L-2$ have an activation function $f_h$ while the
-nodes in the \underline{o}utput layer $(l=L-1)$ might have another acitivation function
-$f_o$. \\
+The goal of training is to minimize the loss function and thus to minimize the remaining
+error for a given set of training data.  A typical example of a loss function is the
+quadratic cost function (mean squared error with additional factor of $\frac{1}{2}$ for
+easy calculation of its derivative). The total loss is a sum of the partial losses $L_i$
+for each training pair $(\vec{x}_i, \vec{y}_i)$ as shown in
+equation~(\ref{eq:mse_loss_func}), where the partial loss itself is a sum over the
+contributions of each component $t$ of the difference between the actual output vector of
+the network and the intended output vector for a given training pair $i$.
 
-The loss function is also chosen as best fit the to problem at hand. The goal of training
-of the network is to minimize the loss function and thus to minimize the remaining error
-for a given set of training data. Gradient descent is used to reduce the error during
-training. A typical example of a loss function is the quadratic cost function (mean
-squared error with additional factor of $frac{1}{2}$ to make the derivative calculation
-easier).
 \begin{equation}
-    L(X,\theta) = \frac{1}{2N} \sum_{t=0}^{N-1}{\lVert a^{L-1}_t - y_t \rVert^2} = \frac{1}{2N} \sum_{t=0}^{N-1}{(a^{L-1}_t - y_t)^2}
+    L(X,\theta) = \frac{1}{2N} \sum_{i=1}^{N}{\lVert \vec{a}^{L-1}_i - \vec{y}_i \rVert^2}
+    = \frac{1}{2N} \sum_{i=1}^{N}{\underbrace{\sum_{t}{(a^{L-1}_t - y_t)^2}}_{L_i}}
+    \label{eq:mse_loss_func}
 \end{equation}
-In order to minimize the loss function, we need to understand how the deviation of the
-actual output to the desired output depends on the choice of learning parameters $\theta$,
-i.e. the weights $w$ and the bias values $b$. In order to minimize the the loss function,
-and thus the deviation between acutal and desired output, they have to be changed in a
-direction against the gradient of the function $L$. This requires to calculate all partial
-derivatives of the loss function with respect to the weights $\pd{L}{w}$ and with respect
-to the biases $\pd{L}{b}$.\\
 
-To understand why this is the case let's consider:
+We need to understand how the deviation of the actual output to the desired output depends
+on the choice of learning parameters $\theta$, i.e. the weights $w$ and the bias values
+$b$. In order to minimize the the loss function, and thus the deviation between acutal and
+desired output, gradient descent is used. This means that the training parameters have to
+be changed in a direction against the gradient of the function $L$. This requires to
+calculate all partial derivatives of the loss function with respect to the weights
+$\pd{L}{w}$ and with respect to the biases $\pd{L}{b}$ and update each learning parameter
+according to
 
+\begin{eqnarray}
+    w^{new} & = &  w^{old} - \eta \pd{L}{w} \\
+    b^{new} & = &  b^{old} - \eta \pd{L}{b}
+    \label{eq:update_weights_and_bias}
+\end{eqnarray}
 
-% \emph{Basis transformation:} The basis vectors of the new system expressed as a linear
-% combination of the basis vectors of the old system is considered a forward transformation.
-% The other direction is considered a backward transformation.\\
+with $\eta$ as learning rate.\\
 
-% Here $F$ stands for $\underline{F}$orward transformation. Basis vectors are chosen to be
-% left multiplied to the transformation matrix, corresponding to summation via the first
-% index of the transformation matrix. Indices are chosen upper and lower to enable the
-% Einstein summation convention later on. Transformation indices are always from "north
-% west" to "south east":
-% \begin{equation}
-%     \label{eq:forward_trafo}
-%     \begin{array}{rcl}
-%         [\hdbtv{1} \quad \hdbtv{2}] & = &
-%         [\hdbv{1} \quad \hdbv{2}]
-%         \begin{bmatrix}
-%             F^{1~}_{~1} & F^{1~}_{~2} \\
-%             F^{2~}_{~1} & F^{2~}_{~2}
-%         \end{bmatrix} \\
-%         \noalign{\vskip10pt}
-%         \hdbtv{1} & = & F^{1~}_{~1}\hdbv{1} + F^{2~}_{~1}\hdbv{2}
-%         \quad \underset{\text{figure}~\ref{fig:old_new_base}}{=} \quad
-%         2 \hdbv{1} + 1 \hdbv{2} \\
-%         \hdbtv{2} & = & F^{1~}_{~2}\hdbv{1} + F^{2~}_{~2}\hdbv{2}
-%         \quad \underset{\text{figure}~\ref{fig:old_new_base}}{=} \quad
-%         -\frac{1}{2}\hdbv{1} + \frac{1}{4}\hdbv{2} \\
-%         \noalign{\vskip10pt}
-%         \Rightarrow \hdbtvc{j} & = &
-%         F^{k~}_{~j} \hdbvc{k} \quad\text{(summation convention)}
-%     \end{array}
-% \end{equation}
+To understand why this is the case, let's consider an arbitrary cost function with three
+parameters $C(w_1,w_2,b)$ as an example. For small changes we get
+\begin{equation}
+    \Delta C \approx \pd{C}{w_1}\Delta w_1 + \pd{C}{w_2}\Delta w_2 +\pd{C}{b}\Delta b
+\end{equation}
+So $\Delta C \approx \vec{\nabla} C \cdot \Delta \vec{v}$ with $\vec{\nabla} C =
+(\pd{C}{w_1}, \pd{C}{w_2}, \pd{C}{b})^T$ and $\Delta \vec{v} = (\Delta w_1, \Delta w_2,
+\Delta b)^T$.\\
 
-% Here $B$ stands for $\underline{B}$ackward transformation:
-% \begin{equation}
-%     \label{eq:backward_trafo}
-%     \begin{array}{rcl}
-%         [\hdbv{1} \quad \hdbv{2}] & = &
-%         [\hdbtv{1} \quad \hdbtv{2}]
-%         \begin{bmatrix}
-%             B^{1~}_{~1} & B^{1~}_{~2} \\
-%             B^{2~}_{~1} & B^{2~}_{~2}
-%         \end{bmatrix} \\
-%         \noalign{\vskip10pt}
-%         \hdbv{1} & = & B^{1~}_{~1}\hdbtv{1} + B^{2~}_{~1}\hdbtv{2}
-%         \quad \underset{\text{figure}~\ref{fig:old_new_base}}{=} \quad
-%         \frac{1}{4} \hdbtv{1} + (-1) \hdbtv{2}\\
-%         \hdbv{2} & = & B^{1~}_{~2}\hdbtv{1} + B^{2~}_{~2}\hdbtv{2}
-%         \quad \underset{\text{figure}~\ref{fig:old_new_base}}{=} \quad
-%         \frac{1}{2}\hdbtv{1} + 2 \hdbtv{2} \\
-%         \noalign{\vskip10pt}
-%         \Rightarrow \hdbvc{i} & = &
-%         B^{j~}_{~i}\hdbtvc{j}\quad\text{(summation convention)}
-%     \end{array}
-% \end{equation}
+To minimize C, we need to assure that $\Delta C < 0$. \\
 
-% Between $B$ and $F$ following relation holds:
-% \begin{equation}
-%     \label{eq:forward_backward_inverse}
-%     \begin{array}{rcl}
-%         B^{j~}_{~i} F^{k~}_{~j} & = & F^{k~}_{~j} B^{j~}_{~i}
-%         = \delta^k_i =
-%         \begin{cases}
-%             1, & \text{if}\ i = k \\
-%             0, & \text{if}\ i \neq k
-%         \end{cases} \\
-%         \text{full equation transposed:} & = &
-%         B^{i~}_{~j} F^{j~}_{~k} = \delta^i_k \\
-%         \noalign{\vskip10pt}
-%         \Rightarrow B & = & F^{-1} \quad\text{($B$ is the inverse of $F$)}
-%     \end{array}
-% \end{equation}
+If we specifically choose $\Delta \vec{v} = -\eta \vec{\nabla} C$, i.e. select the change
+of $\Delta \vec{v}$ against the direction of the gradient vector, we get
+\begin{equation}
+    \Delta C \approx \vec{\nabla} C \cdot (-\eta \vec{\nabla} C)
+    = -\eta \vec{\nabla} C \cdot \vec{\nabla} C
+    = -\eta \lVert \vec{\nabla} C \rVert ^2
+\end{equation}
+which gives us a negative $\Delta C$, because $\lVert \vec{\nabla} C \rVert ^2$ is a
+positive value. \\
 
+In practise we can either calculate the gradient for the full training set, or rather
+approximate the gradient by selecting a random subset of the training samples (called
+mini-batch), or directly calculate the gradient we get for each individual training sample
+pair (so-called stochastic gradient descent), before we apply the resulting change to the
+weights and biases. These approaches reduce the computational effort and typically
+influence the learning speed. \\
+
+It is called an epoch, when the neural net has seen all available training data once
+during a training cycle. The training typically covers several hundred epochs for
+minimizing the loss function. \\
+
+The available data is normally split into training data, validation data, test data in a
+ratio of 70:20:10. The training data set is used to learn the training parameters. The
+validation data is used for optimizing the meta parameters (e.g. learning rate, batch
+sizes, activation functions, etc.). The test data set is used to calculate the quality of
+the training as a result (precision, recall, accuracy). All subsets must of course be
+large enough to be representative for the full available data set or we run into trouble
+due to biased data in the subsets. \\
 
 \newpage

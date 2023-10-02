@@ -15,22 +15,18 @@ enum class f_tag { f, f1 };
 // using ftag::f (default): return f(x)
 // using ftag::f1: return f'(x), i.e. the 1st derivative of f(x)
 
-using a_func_ptr_t = std::vector<double> (*)(std::vector<double> const &,
-                                             f_tag);
+using a_func_ptr_t = std::vector<double> (*)(std::vector<double> const&, f_tag);
 using l_func_ptr_t = double (*)(double, double, f_tag);
 
 // activation functions
-std::vector<double> identity(std::vector<double> const &x,
-                             f_tag tag = f_tag::f);
-std::vector<double> sigmoid(std::vector<double> const &x, f_tag tag = f_tag::f);
-std::vector<double> tanhyp(std::vector<double> const &x, f_tag tag = f_tag::f);
-std::vector<double> reLU(std::vector<double> const &x, f_tag tag = f_tag::f);
-std::vector<double> leaky_reLU(std::vector<double> const &x,
-                               f_tag tag = f_tag::f);
+std::vector<double> identity(std::vector<double> const& x, f_tag tag = f_tag::f);
+std::vector<double> sigmoid(std::vector<double> const& x, f_tag tag = f_tag::f);
+std::vector<double> tanhyp(std::vector<double> const& x, f_tag tag = f_tag::f);
+std::vector<double> reLU(std::vector<double> const& x, f_tag tag = f_tag::f);
+std::vector<double> leaky_reLU(std::vector<double> const& x, f_tag tag = f_tag::f);
 
 // loss functions
-double mean_squared_error(double output, double output_target,
-                          f_tag tag = f_tag::f);
+double mean_squared_error(double output, double output_target, f_tag tag = f_tag::f);
 
 // pointer assignment functions
 a_func_ptr_t get_activation_func_ptr(a_func_t af);
