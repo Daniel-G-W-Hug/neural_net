@@ -1,9 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
-
-### THIS HAS TO COME BEFORE THE PROJECT LINE
-# set(CMAKE_C_COMPILER "gcc-13")
-# set(CMAKE_CXX_COMPILER "g++-13")
-### THIS HAS TO COME BEFORE THE PROJECT LINE
+cmake_minimum_required(VERSION 3.27)
 
 project(nn_simple
         VERSION 0.0.1
@@ -27,4 +22,9 @@ if(CMAKE_BUILD_TYPE EQUAL "Debug")
   endif()
 endif()
 
-add_executable(nn src/main.cpp src/neural_net_func.cpp src/neural_net.cpp src/neural_net_file_io.cpp src/neural_net_print.cpp)
+add_executable(nn
+               src/main.cpp
+               src/neural_net_func.cpp
+               src/neural_net.cpp
+               src/neural_net_file_io.cpp
+               src/neural_net_print.cpp)

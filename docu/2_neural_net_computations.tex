@@ -1,0 +1,156 @@
+\subsection{Neural Net Computations}
+
+\subsubsection*{Initialize the network}
+
+\begin{itemize}
+    \item Set up the network structure by defining:
+    \begin{itemize}
+        \item total number of layers $L$
+        \item nodes per layer
+        \item activation functions for hidden and output layers
+    \end{itemize}
+    \item Initialize the weights $w$ and biases $b$ with random values.
+    \item Read the training data and the corresponding labels.
+\end{itemize}
+
+\subsubsection*{Forward pass}
+
+\begin{enumerate}
+    \item Make $a_t^0$ available for every $t$ in the input layer ($l=0$) for a given
+    training input $\vec{x}_i$.
+    \item Compute the activation $z_t^l = \sum\limits_{f} w_{tf}^l a_f^{l-1} + b_t^l$ for
+    every node in a forward pass for each t in each layer $l = [1,L-1)$ starting from
+    $l=1$.
+    \item Make the output for each layer available by computing $a_t^l = f_h(z_t^l)$ for
+    the hidden layers and $a_t^l = f_o(z_t^l)$ for the output layer.
+    \item Calculate the partial loss $L_i$ for the given training pair $(\vec{x}_i,
+    \vec{y}_i)$ and the calculated output from the forward pass.
+\end{enumerate}
+
+\subsubsection*{Loss function derivatives}
+
+The total loss $L = \frac{1}{N}\sum\limits_i^{N}{L_i}$ is an average of the partial losses
+$L_i$ for the given training pairs $(\vec{x}_i, \vec{y}_i)$. To calculate how the loss
+function depends on the chosen learning parameters, we use the chain rule:
+\begin{subequations}
+    \begin{align}
+        \pd{L_i}{w_{tf}^l} & = \underbrace{\pd{L_i}{z_t^l}}_{\equiv\,\delta_t^l} \pd{z_t^l}{w_{tf}^l}
+        = \delta_t^l \pd{z_t^l}{w_{tf}^l}
+        \label{eq:loss_gradient_by_weight} \\
+        \pd{L_i}{b_t^l} & =  \underbrace{\pd{L_i}{z_t^l}}_{\equiv\,\delta_t^l} \pd{z_t^l}{b_t^l}
+        = \delta_t^l \pd{z_t^l}{b_t^l}
+        \label{eq:loss_gradient_by_bias}  
+    \end{align}
+\end{subequations}
+$\delta_t^l = \pd{L_i}{z_t^l}$ is called the "error term" due to the fact that it is
+directly linked to the deviation between actual and computed output of the neural net in
+the forward pass. \\
+
+Using the definition of $z_t^l = \sum_{f}{w^l_{tf} a^{l-1}_f} + b^l_t$
+from the previous section we get
+\begin{subequations}
+    \begin{align}
+    \pd{z_t^l}{w^l_{tf}} & =\pd{}{w^l_{tf}}\left(
+        \sum\limits_{f}{w^l_{tf} a^{l-1}_f} + b^l_t
+        \right) = a^{l-1}_f \label{eq:activation_gradient_by_weight} \\
+    \pd{z_t^l}{b^l_t} & =\pd{}{b^l_t}\left(
+        \sum\limits_{f}{w^l_{tf} a^{l-1}_f} + b^l_t
+        \right) = 1 \label{eq:activation_gradient_by_bias}
+\end{align}
+\end{subequations}
+where only one term remains of the sum for specific values for $t$ and $f$
+in~(\ref{eq:activation_gradient_by_weight}). \\
+
+Combining the previous equations we get as a result
+\begin{subequations}
+    \begin{align}
+        \pd{L_i}{w_{tf}^l} & = \delta_t^l \cdot a^{l-1}_f
+        \label{eq:loss_gradient_by_weight_condensed}\\
+        \pd{L_i}{b^l_t} & = \delta_t^l
+        \label{eq:loss_gradient_by_bias_condensed}
+    \end{align}
+\end{subequations}
+
+\subsubsection*{Backpropagation - output layer ($l = L-1$):}
+
+With
+\begin{equation}
+    L_i = L_i(\vec{x}_i, \vec{y}_i) = \sum\limits_t L_i(a_t^l,y_t)
+    = \sum\limits_t L_i \left( f_o(z_t^l),y_t \right)
+\end{equation}
+and using the definition of the error term $\delta_t^l$ from above we get
+\begin{equation}
+    \delta_t^l \equiv \pd{L_i}{z_t^l} = \sum\limits_t \pd{L_i}{f_o} \left( f_o(z_t^l),y_t \right)
+    \cdot \pd{f_o}{z_t^l}
+    = \sum\limits_t L_i^\prime \left( f_o(z_t^l),y_t \right)
+    \cdot f_o^\prime(z_t^l)
+\end{equation}
+which, when inserting into equations (\ref{eq:loss_gradient_by_weight_condensed}) and
+(\ref{eq:loss_gradient_by_bias_condensed}), yields
+\begin{subequations}
+    \begin{align}
+        \pd{L_i}{w_{tf}^l} & = \delta_t^l \cdot a^{l-1}_f =
+        \sum\limits_t L_i^\prime \left( f_o(z_t^l),y_t \right)
+        \cdot f_o^\prime(z_t^l) \cdot a^{l-1}_f 
+        \label{eq:loss_gradient_by_weight_expanded}\\
+        \pd{L_i}{b^l_t} & = \delta_t^l = 
+        \sum\limits_t L_i^\prime \left( f_o(z_t^l),y_t \right)
+        \cdot f_o^\prime(z_t^l)
+        \label{eq:loss_gradient_by_bias_expanded}
+    \end{align}
+\end{subequations}
+These formulas will be directly coded in during the backwards pass during the training
+cycle to calculate the gradients for learning.
+
+\subsubsection*{Backpropagation - hidden layers ($1 \leq l \leq L-2$):}
+
+For hidden layers we try to link the local contribution to the loss in layer $l$ with the
+contribution to the loss in a layer $l+1$. Like in forward pass we have to refer to
+different layers with in the formulas to link them\footnote{In the notation we use here,
+again the index $t$ stands for \emph{to}, whereas $f$ stands for \emph{from}. However,
+index $t$ here refers to nodes in layer $l+1$, while index $f$ refers to nodes in layer
+$l$ for the backward pass. This is conceptually the same use as for the forward pass, but
+with reference to other layers.}. \\
+
+Looking at the error term and using the chain rule again we can find a link between
+different layers:
+\begin{equation}
+    \delta_f^l = \pd{L_i}{z_f^l}
+    = \sum\limits_t \underbrace{\pd{L_i}{z_t^{l+1}}}_{= \delta_t^{l+1}} \pd{z_t^{l+1}}{z_f^l} 
+    = \sum\limits_t \delta_t^{l+1} \pd{z_t^{l+1}}{z_f^l}
+    \label{eq:delta_hidden}
+\end{equation} 
+
+Using the definition of $z_t^{l+1}$ we get
+\begin{equation}
+    z_t^{l+1} = \sum\limits_f \left( w_{ft}^{l+1} a_f^l \right) + b_t^l
+    = \sum\limits_f \left( w_{ft}^{l+1} f_h( z_f^l ) \right) + b_t^l
+\end{equation}
+This leads to
+\begin{equation}
+    \pd{z_t^{l+1}}{z_f^l}
+    = \pd{}{z_f^l} \left( \sum\limits_f \left( w_{ft}^{l+1} f_h( z_f^l ) \right) + b_t^l \right)
+    = w_{ft}^{l+1} \pd{f_h( z_f^l )}{z_f^l}
+    = w_{ft}^{l+1} f_h^\prime( z_f^l )
+    \label{eq:dzlp1_dzl}
+\end{equation}
+because there only remains the one term related to the specific index we derive for of the
+sum. \\
+
+Inserting equation (\ref{eq:dzlp1_dzl}) into equation (\ref{eq:delta_hidden}) we get a
+formula for the error term in a hidden layer $l$
+\begin{equation}
+    \delta_f^l = \sum\limits_t \delta_t^{l+1} w_{ft}^{l+1} f_h^\prime( z_f^l )
+    = f_h^\prime( z_f^l ) \sum\limits_t \delta_t^{l+1} w_{ft}^{l+1}
+    \label{eq:delta_hidden_dep}
+\end{equation}
+which will be used to update the error term in the hidden layers during the backward pass.
+This is called backpropagation, because the error contributions are spread layer by layer
+thoughout the neural network beginning from the output layer $l=L-1$ down to the layer
+$l=1$. \\
+
+Looking at eqations (\ref{eq:loss_gradient_by_weight_condensed}) and
+(\ref{eq:delta_hidden_dep}) we can see how the network layers $l-1$, $l$ and $l+1$ are
+linked to each other.
+
+\newpage
