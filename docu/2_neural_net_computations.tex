@@ -19,7 +19,7 @@
     \item Make $a_t^0$ available for every $t$ in the input layer ($l=0$) for a given
     training input $\vec{x}_i$.
     \item Compute the activation $z_t^l = \sum\limits_{f} w_{tf}^l a_f^{l-1} + b_t^l$ for
-    every node in a forward pass for each t in each layer $l = [1,L-1)$ starting from
+    every node in a forward pass for each t in each layer $l = [1,L-1]$ starting from
     $l=1$.
     \item Make the output for each layer available by computing $a_t^l = f_h(z_t^l)$ for
     the hidden layers and $a_t^l = f_o(z_t^l)$ for the output layer.
