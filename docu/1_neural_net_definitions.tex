@@ -60,7 +60,7 @@ Following values are used to define the network:
     \item $b^l_t$, the bias of the node with index $t$ in layer $l$.
     
     \item $z^l_t = \sum_{f}{w^l_{tf} a^{l-1}_f} + b^l_t$ is the total input the node gets
-    from the activated nodes of the previous layer and it's bias.
+    from the activated nodes of the previous layer and it's own bias.
     
     \item Activation functions $f_h$ for the \underline{h}idden layers and the
     \underline{o}utput layer $f_o$.
@@ -130,25 +130,25 @@ of $\Delta \vec{v}$ against the direction of the gradient vector, we get
 which assures a negative $\Delta C$, because $\lVert \vec{\nabla} C \rVert ^2$ is a
 positive value. \\
 
-In practise we can either calculate the gradient for the full training set, or rather
-approximate the gradient by selecting a random subset of the training samples (called a
-mini-batch), or directly calculate the gradient we get for each individual training sample
-pair (called stochastic gradient descent). The resulting gradient is applied according
-to equations~(\ref{eq:update_weights}) and (\ref{eq:update_bias}) to update the weights
-and biases. The approaches of gradient approximation are mainly used to reduce the
+We can either calculate the gradient for the full training set, or rather approximate the
+gradient by selecting a random subset of the training samples (called a mini-batch), or
+directly calculate the gradient we get for each individual training sample pair (called
+stochastic gradient descent). The resulting gradient is applied according to
+equations~(\ref{eq:update_weights}) and (\ref{eq:update_bias}) to update the weights and
+biases. The approaches of gradient approximation are mainly used to reduce the
 computational effort. \\
 
 It is called an epoch, when the neural net has seen all available training data once
 during a training cycle. The training typically covers several hundred epochs for
-minimizing the loss function. \\
+minimizing the loss function. The actual value depends on the data set. \\
 
-The available data is normally split into training data, validation data, test data in a
-ratio of 70:20:10. The training data set is used to learn the training parameters. The
-validation data is used for initially optimizing the meta parameters (e.g. learning rate,
-batch sizes, activation functions, etc.). The test data set is used to calculate the
-quality of the training as a result (precision, recall, accuracy). All subsets must of
-course be large enough to be representative for the full available data set or we run into
-trouble due to biased data in the subsets. \\
+The available data is normally split into training data, validation data, test data. A
+typical ration could be 70:20:10. The training data set is used to learn the training
+parameters. The validation data is used for initially optimizing the meta parameters (e.g.
+learn rate, batch sizes, activation functions, etc.). The test data set is used to
+calculate the quality of the training as a result (precision, recall, accuracy). All
+subsets must of course be large enough to be representative for the full available data
+set or we might run into trouble due to biased data in the subsets. \\
 
 The learning or training cylce for a neural network looks like this:
 \begin{figure}[h] \centering \includegraphics[width=0.75\textwidth]{nn_learning_cycle}

@@ -99,13 +99,13 @@ which, when inserting into equations (\ref{eq:loss_gradient_by_weight_condensed}
         \label{eq:loss_gradient_by_bias_expanded}
     \end{align}
 \end{subequations}
-These formulas will be directly coded in during the backwards pass during the training
-cycle to calculate the gradients for learning.
+These formulas will be directly coded in the backwards pass during the training cycle to
+calculate the gradients for learning.
 
 \subsubsection*{Backpropagation - hidden layers ($1 \leq l \leq L-2$):}
 
 For hidden layers we try to link the local contribution to the loss in layer $l$ with the
-contribution to the loss in a layer $l+1$. Like in forward pass we have to refer to
+contribution to the loss in a layer $l+1$. Like in the forward pass we have to refer to
 different layers with in the formulas to link them\footnote{In the notation we use here,
 again the index $t$ stands for \emph{to}, whereas $f$ stands for \emph{from}. However,
 index $t$ here refers to nodes in layer $l+1$, while index $f$ refers to nodes in layer
@@ -134,8 +134,8 @@ This leads to
     = w_{ft}^{l+1} f_h^\prime( z_f^l )
     \label{eq:dzlp1_dzl}
 \end{equation}
-because there only remains the one term related to the specific index we derive for of the
-sum. \\
+because there only remains the one term of the sum related to the specific index we derive
+for. \\
 
 Inserting equation (\ref{eq:dzlp1_dzl}) into equation (\ref{eq:delta_hidden}) we get a
 formula for the error term in a hidden layer $l$
