@@ -8,6 +8,9 @@
 #include <iostream>
 #include <numeric> // std::inner_product
 
+#include "fmt/format.h"
+#include "fmt/ranges.h" // support printing of (nested) containers & tuples
+
 std::random_device rd;
 std::mt19937 gen(rd());
 
@@ -264,14 +267,14 @@ double neural_net::get_partial_loss(std::vector<double> const& output_target_vec
     return lossf(layer[l].a, output_target_vec);
 } // get_partial_loss
 
-void neural_net::train(f_data_t const& fd, f_data_t const& td,
+void neural_net::train(f_data_t const& fd_train, f_data_t const& td_train,
                        nn_training_meta_data_t m_data)
 {
     // train the network using gradient descent
 
     // compatible number of lines for data and target values?
-    std::size_t total_num_training_data_sets = fd.size();
-    assert(total_num_training_data_sets == td.size());
+    std::size_t total_num_training_data_sets = fd_train.size();
+    assert(total_num_training_data_sets == td_train.size());
     std::cout << "total_num_training_data_sets = " << total_num_training_data_sets
               << std::endl;
 
@@ -353,8 +356,8 @@ void neural_net::train(f_data_t const& fd, f_data_t const& td,
                 }
 
                 // select the next training pair
-                std::vector<double> input_vec{fd[index_vec[n]]};
-                std::vector<double> target_output_vec{td[index_vec[n]]};
+                std::vector<double> input_vec{fd_train[index_vec[n]]};
+                std::vector<double> target_output_vec{td_train[index_vec[n]]};
 
                 forward_pass(input_vec);
                 total_loss +=
@@ -382,25 +385,23 @@ void neural_net::train(f_data_t const& fd, f_data_t const& td,
 
         if (epoch % m_data.epoch_output_skip == 0) {
             std::cout << "epoch " << std::setw(5) << epoch << ": ";
-            std::cout << "L_total: " << std::setw(9) << std::setprecision(4)
-                      << total_loss;
+            std::cout << "L_tot: " << std::setw(9) << std::setprecision(4) << total_loss;
             if (epoch == 1) {
                 // there is not reasonable dL yet
                 std::cout << "\n";
             }
             else {
-                std::cout << ", dL_total: " << std::setw(9) << std::setprecision(4)
-                          << total_loss - total_loss_old
-                          << ", dL_rel_change: " << std::setw(9) << std::setprecision(4)
-                          << total_loss_change_rate << "\n";
+                std::cout << ", dL_tot: " << std::setw(9) << std::setprecision(4)
+                          << total_loss - total_loss_old << ", dL_rel: " << std::setw(9)
+                          << std::setprecision(4) << total_loss_change_rate << "\n";
             }
         }
 
         if (total_loss_change_rate < m_data.min_relative_loss_change_rate) {
             std::cout << "\nRelative change rate between epochs too small! Stopped "
                          "iteration early.\n\n";
-            std::cout << "epoch " << epoch
-                      << ": dL_rel_change = " << total_loss_change_rate << "\n\n\n";
+            std::cout << "epoch " << epoch << ": dL_rel = " << total_loss_change_rate
+                      << "\n\n\n";
             break;
         }
         total_loss_old = total_loss;
@@ -414,3 +415,54 @@ void neural_net::train(f_data_t const& fd, f_data_t const& td,
     } // epoch loop
 
 } // train
+
+
+bool is_classified_correctly(std::vector<double> const& output_vec,
+                             std::vector<double> const& target_vec)
+{
+    if (output_vec.size() == 1) {
+        // try this: delta^2 < 0.001 (arbitrarly chosen value!)
+        double delta = output_vec[0] - target_vec[0];
+        return (delta * delta < 0.001);
+    }
+    else {
+        // try this: maximum of output and target vector are at same index and output
+        // value at that index is larger than 0.5 (this is reasonable for a softmax output
+        // layer, but questionable for other modes)
+
+        auto out_iter = std::max_element(output_vec.begin(), output_vec.end());
+        auto out_idx = std::distance(output_vec.begin(), out_iter);
+
+        auto target_iter = std::max_element(target_vec.begin(), target_vec.end());
+        auto target_idx = std::distance(target_vec.begin(), target_iter);
+
+        return ((out_idx == target_idx) && (*out_iter > 0.5));
+    }
+}
+
+void neural_net::test(f_data_t const& fd_test, f_data_t const& td_test)
+{
+
+    // fmt::println("target test data: {}", fmt::join(td_test, ", "));
+
+    std::size_t num_test_samples = fd_test.size();
+    fmt::println("target test data has {} samples.", num_test_samples);
+
+    std::vector<double> output;
+    std::size_t not_classified_correctly{0};
+
+    for (std::size_t cnt = 0; cnt < num_test_samples; ++cnt) {
+        output = forward_pass_with_output(fd_test[cnt]);
+        // fmt::println("output: {}, target: {}", fmt::join(output, ", "),
+        //              fmt::join(td_test[cnt], ", "));
+        bool classified_correctly = is_classified_correctly(output, td_test[cnt]);
+        if (!classified_correctly) ++not_classified_correctly;
+        fmt::println("output: {:8.3},    target: {:1.1},    correctly classifed: {}",
+                     fmt::join(output, ", "), fmt::join(td_test[cnt], ", "),
+                     classified_correctly);
+    }
+    double accuracy =
+        double(num_test_samples - not_classified_correctly) / num_test_samples;
+    fmt::println("Accuracy: {:.2}", accuracy);
+
+} // test

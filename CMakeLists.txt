@@ -28,3 +28,7 @@ add_executable(nn
                src/neural_net.cpp
                src/neural_net_file_io.cpp
                src/neural_net_print.cpp)
+
+# dependency required for decent printing support (please install separately)
+find_package(fmt CONFIG REQUIRED)
+target_link_libraries(nn PRIVATE fmt::fmt-header-only)

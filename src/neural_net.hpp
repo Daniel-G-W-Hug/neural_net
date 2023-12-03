@@ -90,8 +90,7 @@ struct neural_net {
                                         // values for gradient descent
     std::size_t total_num_weights{0};   // total number of weights in network
 
-    using layer_t = std::vector<nn_layer_t>;
-    layer_t layer;
+    std::vector<nn_layer_t> layer;
 
     lf_ptr_t lossf; // ptr to loss function
 
@@ -108,7 +107,10 @@ struct neural_net {
     void update_w_and_b(double learn_rate, std::size_t num_samples);
     double get_partial_loss(std::vector<double> const& target_vec);
 
-    void train(f_data_t const& fd, f_data_t const& td, nn_training_meta_data_t m_data);
+    void train(f_data_t const& fd_train, f_data_t const& td_train,
+               nn_training_meta_data_t m_data);
+
+    void test(f_data_t const& fd_test, f_data_t const& td_test);
 };
 
 #endif // NEURAL_NET_HPP

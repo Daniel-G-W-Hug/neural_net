@@ -36,8 +36,7 @@ std::tuple<std::size_t, std::stringstream> get_next_line(std::ifstream& ifs)
                              std::to_string(line_number) + ".\n");
 }
 
-std::tuple<nn_structure_t, nn_training_meta_data_t>
-read_training_cfg(std::string const& fname)
+std::tuple<nn_structure_t, nn_training_meta_data_t> read_cfg(std::string const& fname)
 {
 
     nn_structure_t m_structure;
@@ -270,7 +269,7 @@ f_data_t read_f_data(std::string const& fname, std::size_t assert_size)
     return file_data;
 }
 
-void print_f_data(std::string const& tag, f_data_t& fd)
+void print_f_data(std::string const& tag, f_data_t const& fd)
 {
 
     std::cout << "'" << tag << "':" << std::endl;
@@ -299,6 +298,7 @@ void print_f_data(std::string const& tag, f_data_t& fd)
 }
 
 std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname,
+                                               std::size_t num_input_nodes,
                                                std::size_t num_output_nodes)
 {
     // read file with mnist data with first column containing target data
@@ -336,6 +336,8 @@ std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname,
         double in;
         char ch;
         std::size_t line_number{0};
+        std::size_t idx_min{num_output_nodes}; // initialize for range search
+        std::size_t idx_max{0};                // initialize for range search
 
         // read line by line
         while (std::getline(ifs, line)) {
@@ -370,6 +372,14 @@ std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname,
                     ", line " + std::to_string(line_number));
             }
 
+            if (num_input_nodes != items_per_line_current - 1) {
+                throw std::runtime_error(
+                    "File input error in file: " + std::string(fname) + ", line " +
+                    std::to_string(line_number) +
+                    ". Number of input values does not match number of neural network "
+                    "input nodes.");
+            }
+
             if (num_output_nodes > 1 &&
                 (line_data[0] < 0.0 || line_data[0] >= num_output_nodes)) {
                 // Just check for case of more than one output node.
@@ -382,6 +392,14 @@ std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname,
             }
             // ATTENTION: This only works reasonably for integer input data
             std::size_t idx = static_cast<std::size_t>(line_data[0]);
+            // remember range of values to assure that full range is covered after all
+            // data was seen, i.e. after reading the complete file
+            if (idx < idx_min) {
+                idx_min = idx;
+            }
+            if (idx > idx_max) {
+                idx_max = idx;
+            }
 
             std::vector<double> tmp(num_output_nodes, 0.0);
             if (num_output_nodes > 1) {
@@ -400,6 +418,16 @@ std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname,
                 tmp.push_back(line_data[cnt]);
             }
             training_data.push_back(tmp);
+        }
+
+        if (num_output_nodes > 1 &&
+            ((idx_min != 0) || (idx_max != num_output_nodes - 1))) {
+            throw std::runtime_error(
+                "File input error in file: " + std::string(fname) +
+                ". Range of target values does not match number of neural network "
+                "output nodes. Expected range: 0 to " +
+                std::to_string(num_output_nodes - 1) + ". Actual range: " +
+                std::to_string(idx_min) + " to " + std::to_string(idx_max));
         }
 
         ifs.close();
