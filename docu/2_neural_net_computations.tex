@@ -34,10 +34,12 @@ $L_i$ for the given training pairs $(\vec{x}_i, \vec{y}_i)$. To calculate how th
 function depends on the chosen learning parameters, we use the chain rule:
 \begin{subequations}
     \begin{align}
-        \pd{L_i}{w_{tf}^l} & = \underbrace{\pd{L_i}{z_t^l}}_{\equiv\,\delta_t^l} \pd{z_t^l}{w_{tf}^l}
+        \pd{L_i}{w_{tf}^l} & =
+        \underbrace{\pd{L_i}{z_t^l}}_{\equiv\,\delta_t^l} \pd{z_t^l}{w_{tf}^l}
         = \delta_t^l \pd{z_t^l}{w_{tf}^l}
         \label{eq:loss_gradient_by_weight} \\
-        \pd{L_i}{b_t^l} & =  \underbrace{\pd{L_i}{z_t^l}}_{\equiv\,\delta_t^l} \pd{z_t^l}{b_t^l}
+        \pd{L_i}{b_t^l} & =
+        \underbrace{\pd{L_i}{z_t^l}}_{\equiv\,\delta_t^l} \pd{z_t^l}{b_t^l}
         = \delta_t^l \pd{z_t^l}{b_t^l}
         \label{eq:loss_gradient_by_bias}  
     \end{align}
@@ -80,8 +82,8 @@ With
 \end{equation}
 and using the definition of the error term $\delta_t^l$ from above we get
 \begin{equation}
-    \delta_t^l \equiv \pd{L_i}{z_t^l} = \sum\limits_t \pd{L_i}{f_o} \left( f_o(z_t^l),y_t \right)
-    \cdot \pd{f_o}{z_t^l}
+    \delta_t^l \equiv \pd{L_i}{z_t^l} = \sum\limits_t \pd{L_i}{f_o}
+    \left( f_o(z_t^l),y_t \right) \cdot \pd{f_o}{z_t^l}
     = \sum\limits_t L_i^\prime \left( f_o(z_t^l),y_t \right)
     \cdot f_o^\prime(z_t^l)
 \end{equation}
@@ -100,7 +102,15 @@ which, when inserting into equations (\ref{eq:loss_gradient_by_weight_condensed}
     \end{align}
 \end{subequations}
 These formulas will be directly coded in the backwards pass during the training cycle to
-calculate the gradients for learning.
+calculate the gradients for learning. Why it makes sense to combine the derivative of the
+loss function $L_i^\prime$ and the derivative of the activation function in the output
+layer $f_o^\prime(z_t^l)$ can be seen at this URL:\\
+\tiny
+\url{https://davidbieber.com/snippets/2020-12-12-derivative-of-softmax-and-the-softmax-cross-entropy-loss/}
+\normalsize \\
+for the combination of cross-entropy loss and the softmax function as an example. The
+combination significantly simplifies the resulting computation, when compared to computing
+both derivatives separately.
 
 \subsubsection*{Backpropagation - hidden layers ($1 \leq l \leq L-2$):}
 

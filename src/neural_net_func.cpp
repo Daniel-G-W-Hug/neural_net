@@ -1,6 +1,7 @@
 
 #include "neural_net_func.hpp"
 
+#include <algorithm> // std::max_element()
 #include <cmath>
 #include <cstddef> // std::size_t
 #include <iostream>
@@ -136,45 +137,116 @@ std::vector<double> leaky_reLU(std::vector<double> const& x, f_tag tag)
     return y;
 }
 
-double mean_squared_error(double output, double output_target, f_tag tag)
+std::vector<double> softmax(std::vector<double> const& x, f_tag tag)
 {
 
-    double partial_loss{0.0};
+    std::size_t dim = x.size();
+    std::vector<double> y(dim);
+
+    // use stable version of softmax by normalizing input elements
+    // (only for numeric stability, w/o effect on derivative calculation in loss function)
+    double d = -(*std::max_element(x.begin(), x.end()));
+
+    double denom{0.0};
 
     switch (tag) {
 
         case f_tag::f:
 
-            // scaling factor 0.5 is chosen to simplify the derivative calculation
-            partial_loss = 0.5 * std::pow(output - output_target, 2.0);
+            for (std::size_t n = 0; n < dim; ++n) {
+                denom += std::exp(x[n] + d);
+            }
+
+            for (std::size_t n = 0; n < dim; ++n) {
+                y[n] = std::exp(x[n] + d) / denom;
+            }
             break;
 
         case f_tag::f1:
 
-            partial_loss = output - output_target;
+            throw std::runtime_error("Failed to calculate derivative of softmax function."
+                                     "Hint: Use softmax only for output layer in "
+                                     "combination with loss function, not for hidden "
+                                     "layers.\n");
             break;
+    }
+
+    return y;
+}
+
+double MSE(std::vector<double> const& output,
+           std::vector<double> const& target_output_vec)
+{
+    // MSE: Mean Squared Error (with factor 0.5 for simple derivative)
+    std::size_t dim = output.size();
+    double partial_loss{0.0};
+    for (std::size_t to = 0; to < dim; ++to) {
+        partial_loss += std::pow(output[to] - target_output_vec[to], 2.0);
+    }
+
+    return 0.5 * partial_loss;
+}
+
+double CE(std::vector<double> const& output, std::vector<double> const& target_output_vec)
+{
+    // CROSS_ENTROPY (CE): CE = - sum_t(target_output[t] * log(output[t])
+
+    std::size_t dim = output.size();
+    double partial_loss{0.0};
+    for (std::size_t to = 0; to < dim; ++to) {
+        partial_loss -= target_output_vec[to] * std::log(output[to]);
     }
 
     return partial_loss;
 }
 
-a_func_ptr_t get_activation_func_ptr(a_func_t af)
+
+std::vector<double> MSE_identity_f1(std::vector<double> const& output,
+                                    std::vector<double> const& target_output_vec)
+{
+
+    std::size_t dim = output.size();
+    std::vector<double> f1(dim);
+    for (std::size_t to = 0; to < dim; ++to) {
+        f1[to] = output[to] - target_output_vec[to];
+    }
+
+    return f1;
+}
+
+std::vector<double> CE_softmax_f1(std::vector<double> const& output,
+                                  std::vector<double> const& target_output_vec)
+{
+
+    std::size_t dim = output.size();
+    std::vector<double> f1(dim);
+    for (std::size_t to = 0; to < dim; ++to) {
+        f1[to] = output[to] - target_output_vec[to];
+    }
+
+    return f1;
+}
+
+af_ptr_t get_af_ptr(af_t af)
 {
     switch (af) {
-        case (a_func_t::identity):
+        case (af_t::identity):
             return &identity;
             break;
-        case (a_func_t::sigmoid):
+        case (af_t::sigmoid):
             return &sigmoid;
             break;
-        case (a_func_t::tanhyp):
+        case (af_t::tanhyp):
             return &tanhyp;
             break;
-        case (a_func_t::reLU):
+        case (af_t::reLU):
             return &reLU;
             break;
-        case (a_func_t::leaky_reLU):
+        case (af_t::leaky_reLU):
             return &leaky_reLU;
+            break;
+        case (af_t::softmax):
+            return &softmax;
             break;
         default:
             std::unreachable();
@@ -183,11 +255,14 @@ a_func_ptr_t get_activation_func_ptr(a_func_t af)
     std::unreachable();
 }
 
-l_func_ptr_t get_loss_func_ptr(l_func_t lf)
+lf_ptr_t get_lf_ptr(lf_t lf)
 {
     switch (lf) {
-        case (l_func_t::mse):
-            return &mean_squared_error;
+        case (lf_t::MSE):
+            return &MSE;
+            break;
+        case (lf_t::CE):
+            return &CE;
             break;
         default:
             std::unreachable();

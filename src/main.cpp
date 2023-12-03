@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
         // f_data_t td = read_f_data(f_target, nn.num_nodes[nn.num_layers - 1]);
 
         f_data_t fd, td;
-        std::tie(fd, td) = read_mnist_data(f_mnist);
+        std::tie(fd, td) = read_mnist_data(f_mnist, nn.num_nodes[nn.num_layers - 1]);
 
         // print_f_data("training data", fd);
         // print_f_data("training target data", td);
@@ -67,29 +67,42 @@ int main(int argc, char* argv[])
         // print_nodes("nn", nn);
         // print_weights("nn", nn);
 
-        std::cout << "Prediction with trained network:\n";
+        // std::cout << "Prediction with trained network:\n";
 
-        // // for 2x2x1_example
+        // // for 2x1_linear classify and 2x2x1_example
         // std::vector<double> inp1{-7., -3.}, inp2{20., 2.}, outp;
         // outp = nn.forward_pass_with_output(inp1);
-        // std::cout << "inp1 => " << outp[0] << std::endl;
+        // std::cout << "inp1 => outp[0]: " << outp[0] << std::endl;
+        // if (nn.num_nodes[nn.num_layers - 1] > 1)
+        //     std::cout << "inp1 => outp[1]: " << outp[1] << std::endl;
         // outp = nn.forward_pass_with_output(inp2);
-        // std::cout << "inp2 => " << outp[0] << std::endl;
+        // std::cout << "inp2 => outp[0]: " << outp[0] << std::endl;
+        // if (nn.num_nodes[nn.num_layers - 1] > 1)
+        //     std::cout << "inp2 => outp[1]: " << outp[1] << std::endl;
 
         // // for 2x2x1_xor
-        // std::vector<double> inp1{1., 0.}, inp2{1., 1.}, outp;
+        // std::vector<double> inp1{1., 0.1}, inp2{1.1, 1.}, outp;
         // outp = nn.forward_pass_with_output(inp1);
-        // std::cout << "inp1 => " << outp[0] << std::endl;
+        // std::cout << "inp1 => outp[0]: " << outp[0] << std::endl;
+        // if (nn.num_nodes[nn.num_layers - 1] > 1)
+        //     std::cout << "inp1 => outp[1]: " << outp[1] << std::endl;
         // outp = nn.forward_pass_with_output(inp2);
-        // std::cout << "inp2 => " << outp[0] << std::endl;
+        // std::cout << "inp2 => outp[0]: " << outp[0] << std::endl;
+        // if (nn.num_nodes[nn.num_layers - 1] > 1)
+        //     std::cout << "inp2 => outp[1]: " << outp[1] << std::endl;
 
         // // for iris_example
-        // std::vector<double> inp1{4.8, 3.01, 1.45, 0.15},
-        //     inp2{6.31, 2.29, 4.45, 1.3}, outp;
+        // std::vector<double> inp1{4.8, 3.01, 1.45, 0.15}, inp2{6.31, 2.29, 4.45, 1.3},
+        //     outp;
         // outp = nn.forward_pass_with_output(inp1);
-        // std::cout << "inp1 => " << outp[0] << std::endl;
+        // std::cout << "inp1 => outp[0]: " << outp[0] << std::endl;
+        // if (nn.num_nodes[nn.num_layers - 1] > 1)
+        //     std::cout << "inp1 => outp[1]: " << outp[1] << std::endl;
+
         // outp = nn.forward_pass_with_output(inp2);
-        // std::cout << "inp2 => " << outp[0] << std::endl;
+        // std::cout << "inp2 => outp[0]: " << outp[0] << std::endl;
+        // if (nn.num_nodes[nn.num_layers - 1] > 1)
+        //     std::cout << "inp2 => outp[1]: " << outp[1] << std::endl;
     }
     catch (std::exception& e) {
         std::cout << "Exception: " << e.what() << std::endl;

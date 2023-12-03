@@ -22,10 +22,13 @@ struct nn_structure_t {
 
     std::vector<std::size_t> net_structure; // number of nodes for each layer
 
-    a_func_t af_h{a_func_t::sigmoid};  // activation function for hidden layers
-    a_func_t af_o{a_func_t::identity}; // activation function for output layer
+    af_t af_h{af_t::sigmoid};  // activation function for hidden layers
+    af_t af_o{af_t::identity}; // activation function for output layer
 
-    l_func_t lossf{l_func_t::mse}; // loss function for neural net
+    lf_t lossf{lf_t::MSE}; // loss function for neural net
+
+    lfaf_f1_t lossf_af_f1{
+        lfaf_f1_t::MSE_identity}; // combined loss and activation for output layer
 };
 struct nn_training_meta_data_t {
 
@@ -61,7 +64,7 @@ struct nn_layer_t {
 
     std::vector<double> delta; // storage for backpropagation
 
-    a_func_ptr_t af; // ptr to activation function
+    af_ptr_t af; // ptr to activation function
 
     using weight_matrix_t = std::vector<std::vector<double>>;
     weight_matrix_t w;    // weight matrix
@@ -90,7 +93,7 @@ struct neural_net {
     using layer_t = std::vector<nn_layer_t>;
     layer_t layer;
 
-    l_func_ptr_t lossf; // ptr to loss function
+    lf_ptr_t lossf; // ptr to loss function
 
     neural_net(nn_structure_t structure_input);
     void set_w_and_b_fixed(double val);

@@ -76,20 +76,20 @@ neural_net::neural_net(nn_structure_t structure_input) : m_structure{structure_i
         // initialize activation function for layer
         if (l == 0) {
             // input layer
-            layer[l].af = get_activation_func_ptr(a_func_t::identity);
+            layer[l].af = get_af_ptr(af_t::identity);
         }
         else if (l == num_layers - 1) {
             // output layer
-            layer[l].af = get_activation_func_ptr(m_structure.af_o);
+            layer[l].af = get_af_ptr(m_structure.af_o);
         }
         else {
             // hidden layers
-            layer[l].af = get_activation_func_ptr(m_structure.af_h);
+            layer[l].af = get_af_ptr(m_structure.af_h);
         }
     }
 
-    // set loss function
-    lossf = get_loss_func_ptr(m_structure.lossf);
+    // set loss function and derivative f1 of combination of loss and activation functions
+    lossf = get_lf_ptr(m_structure.lossf);
 
 } // neural_net (ctor)
 
@@ -167,16 +167,27 @@ void neural_net::backward_pass(std::vector<double> const& input_vec,
     // given input and target output vectors
 
     // calculate deltas in output layer
-    // TODO: replace specific implementation for MSE by arbitray loss function
     {
         std::size_t l = num_layers - 1;
 
-        std::vector<double> af1(num_nodes[l]);
-        af1 = layer[l].af(layer[l].z, f_tag::f1);
+        if (m_structure.lossf_af_f1 == lfaf_f1_t::MSE_identity ||
+            m_structure.lossf_af_f1 == lfaf_f1_t::MSE_sigmoid) {
+            layer[l].delta = MSE_identity_f1(layer[l].a, output_target_vec);
+        }
 
-        for (std::size_t to = 0; to < num_nodes[l]; ++to) {
-            layer[l].delta[to] =
-                lossf(layer[l].a[to], output_target_vec[to], f_tag::f1) * af1[to];
+        if (m_structure.lossf_af_f1 == lfaf_f1_t::MSE_sigmoid) {
+            // additional multiplication with derivative of acitivation function required
+
+            std::vector<double> af1(num_nodes[l]);
+            af1 = layer[l].af(layer[l].z, f_tag::f1);
+
+            for (std::size_t to = 0; to < num_nodes[l]; ++to) {
+                layer[l].delta[to] *= af1[to];
+            }
+        }
+
+        if (m_structure.lossf_af_f1 == lfaf_f1_t::CE_softmax) {
+            layer[l].delta = CE_softmax_f1(layer[l].a, output_target_vec);
         }
     }
 
@@ -188,9 +199,6 @@ void neural_net::backward_pass(std::vector<double> const& input_vec,
 
         for (std::size_t from = 0; from < num_nodes[l]; ++from) {
             for (std::size_t to = 0; to < num_nodes[l + 1]; ++to) {
-                // TODO: check whether this can be put directly in an algo call
-                // (alternative: prior transpose, which is updated with each update of w
-                // might lead to overall speed-up)
                 layer[l].delta[from] = layer[l + 1].w[to][from] * layer[l + 1].delta[to];
             }
             layer[l].delta[from] *= af1[from];
@@ -251,13 +259,9 @@ double neural_net::get_partial_loss(std::vector<double> const& output_target_vec
     // RETURN:
     // partial loss L_n for the training pair for given output_target_vec
 
-    std::size_t l = num_layers - 1;
-    double partial_loss{0.0};
-    for (std::size_t to = 0; to < num_nodes[l]; ++to) {
-        partial_loss += lossf(layer[l].a[to], output_target_vec[to], f_tag::f);
-    }
+    const std::size_t l = num_layers - 1;
     // partial loss L_n for the given training pair
-    return partial_loss;
+    return lossf(layer[l].a, output_target_vec);
 } // get_partial_loss
 
 void neural_net::train(f_data_t const& fd, f_data_t const& td,

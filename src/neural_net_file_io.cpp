@@ -3,9 +3,8 @@
 #include <cassert>
 #include <iostream>
 #include <mutex> // once_flag
-#include <sstream>
 #include <stdexcept>
-#include <string>
+#include <utility> // std::unreachable()
 #include <vector>
 
 std::tuple<std::size_t, std::stringstream> get_next_line(std::ifstream& ifs)
@@ -77,7 +76,7 @@ read_training_cfg(std::string const& fname)
         std::tie(line_no, iss) = get_next_line(ifs);
         iss >> int_in;
         if (int_in > 0 && int_in <= 5) {
-            m_structure.af_h = static_cast<a_func_t>(int_in);
+            m_structure.af_h = static_cast<af_t>(int_in);
         }
         else {
             throw std::runtime_error(
@@ -85,11 +84,28 @@ read_training_cfg(std::string const& fname)
                 std::to_string(int_in) + " in line " + std::to_string(line_no) + ".\n");
         }
 
-        // read activation function for output layer
+        // read combination of loss function and activation function for output layer
         std::tie(line_no, iss) = get_next_line(ifs);
         iss >> int_in;
-        if (int_in > 0 && int_in <= 5) {
-            m_structure.af_o = static_cast<a_func_t>(int_in);
+        if (int_in > 0 && int_in <= 3) {
+            m_structure.lossf_af_f1 = static_cast<lfaf_f1_t>(int_in);
+            switch (m_structure.lossf_af_f1) {
+                case (lfaf_f1_t::MSE_identity):
+                    m_structure.af_o = af_t::identity;
+                    m_structure.lossf = lf_t::MSE;
+                    break;
+                case (lfaf_f1_t::MSE_sigmoid):
+                    m_structure.af_o = af_t::sigmoid;
+                    m_structure.lossf = lf_t::MSE;
+                    break;
+                case (lfaf_f1_t::CE_softmax):
+                    m_structure.af_o = af_t::softmax;
+                    m_structure.lossf = lf_t::CE;
+                    break;
+                default:
+                    std::unreachable();
+                    break;
+            }
         }
         else {
             throw std::runtime_error(
@@ -282,13 +298,27 @@ void print_f_data(std::string const& tag, f_data_t& fd)
     return;
 }
 
-std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname)
+std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname,
+                                               std::size_t num_output_nodes)
 {
     // read file with mnist data with first column containing target data
     //
     // (i.e. having target value 0..9 in column 1 for the MNIST character data set
     // and column 2..785 consisting of 28x28 = 784 grey values in range [0..255])
     // (same amount of data in each row)
+    //
+    // for num_output_nodes > 1:
+    // the target data will be transformed into an output_vector with num_output_nodes
+    // elements that serve as ground truth values (i.e. = 1.0 at corresponding index and
+    // otherwise 0.0)
+    //
+    // for num_output_nodes == 1:
+    // output target value is contained in target_data[0]
+
+    if (num_output_nodes == 0) {
+        // there must be at least one output node
+        throw std::runtime_error("Config error: there must be at least one output node.");
+    }
 
     f_data_t training_data;
     f_data_t target_data;
@@ -322,7 +352,6 @@ std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname)
             ++line_number;
 
             std::vector<double> line_data;
-            std::vector<double> tmp;
 
             while (iss >> in) {
                 // read double values as long as available
@@ -341,10 +370,32 @@ std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname)
                     ", line " + std::to_string(line_number));
             }
 
-            tmp.push_back(line_data[0]);
-            target_data.push_back(tmp); // target value in 1st column
-            tmp.clear();
+            if (num_output_nodes > 1 &&
+                (line_data[0] < 0.0 || line_data[0] >= num_output_nodes)) {
+                // Just check for case of more than one output node.
+                // In case one output node only, there might be more than one target
+                // output state.
+                throw std::runtime_error(
+                    "Potential ground truth value " + std::to_string(line_data[0]) +
+                    " in file: " + std::string(fname) + ", line " +
+                    std::to_string(line_number) + " does not match expected range.");
+            }
+            // ATTENTION: This only works reasonably for integer input data
+            std::size_t idx = static_cast<std::size_t>(line_data[0]);
 
+            std::vector<double> tmp(num_output_nodes, 0.0);
+            if (num_output_nodes > 1) {
+                tmp[idx] = 1.0; // Use target value from 1st column of input file as index
+                                // for ground truth value 1.0. Other values are set to 0.0
+                                // during initialization.
+            }
+            else {
+                tmp[0] = line_data[0];
+            }
+            target_data.push_back(tmp);
+
+            tmp.clear();
+            // the remaining line contains the training data
             for (std::size_t cnt = 1; cnt < items_per_line; ++cnt) {
                 tmp.push_back(line_data[cnt]);
             }
