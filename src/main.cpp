@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
         // print_f_data("test target data", td_test);
 
         if (case_name.contains("mnist")) {
-            // scale picture data, i.e. gray scale range from range 0..255 to 0..1
+            // scale picture data, i.e. gray scale range from range 0..255 to 0.0..1.0
             std::cout << "\nScaling mnist data\n\n";
             scale_data(fd_train, 1. / 255.);
             scale_data(fd_test, 1. / 255.);
@@ -138,17 +138,6 @@ int main(int argc, char* argv[])
         ///////////////////////////////////////////////////////////////////////
         std::cout << "Prediction with trained network:\n";
         nn.test(fd_test, td_test);
-
-        // // for 2x1_linear classify and 2x2x1_example
-        // std::vector<double> inp1{-7., -3.}, inp2{20., 2.}, outp;
-        // outp = nn.forward_pass_with_output(inp1);
-        // std::cout << "inp1 => outp[0]: " << outp[0] << std::endl;
-        // if (nn.num_nodes[nn.num_layers - 1] > 1)
-        //     std::cout << "inp1 => outp[1]: " << outp[1] << std::endl;
-        // outp = nn.forward_pass_with_output(inp2);
-        // std::cout << "inp2 => outp[0]: " << outp[0] << std::endl;
-        // if (nn.num_nodes[nn.num_layers - 1] > 1)
-        //     std::cout << "inp2 => outp[1]: " << outp[1] << std::endl;
     }
     catch (std::exception& e) {
         std::cout << "Exception: " << e.what() << std::endl;
