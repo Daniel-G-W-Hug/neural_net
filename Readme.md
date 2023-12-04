@@ -3,3 +3,5 @@
     cd build
     cmake ..
     cmake --build .
+
+    C++ dependency: libfmt (must be installed separately)
