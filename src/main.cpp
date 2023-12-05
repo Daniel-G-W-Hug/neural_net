@@ -30,8 +30,8 @@ void print_help_message()
     std::cout << "If case_name ends with '_validate', i.e. is "
                  "'case_name_validate' then:\n\n";
     std::cout << "  - 'case_name_validate.cfg' -> config file incl. meta data.\n";
-    std::cout << "  - 'case_name_validate.csv' -> validation data.\n";
-    std::cout << "  - 'case_name_test.csv' -> test data.\n\n";
+    std::cout << "  - 'case_name_train.csv' -> validation data.\n";
+    std::cout << "  - 'case_name_validate.csv' -> test data.\n\n";
 }
 
 std::tuple<std::string, std::string, std::string>
@@ -47,14 +47,16 @@ get_file_names(std::string const& prefix, std::string const& case_name)
 
     std::string str_to_erase{"_validate"};
     if (loc_case_name.contains(str_to_erase)) {
-        fn_train = prefix + loc_case_name + ".csv";
+        fn_test = prefix + loc_case_name + ".csv";
         // remove "_validate", to get correct file name for test data below
         loc_case_name.erase(loc_case_name.find(str_to_erase), str_to_erase.length());
-    }
-    else {
         fn_train = prefix + loc_case_name + "_train.csv";
     }
-    fn_test = prefix + loc_case_name + "_test.csv";
+    else {
+        fn_test = prefix + loc_case_name + "_test.csv";
+        fn_train = prefix + loc_case_name + "_train.csv";
+    }
+
 
     return std::make_tuple(fn_cfg, fn_train, fn_test);
 }
