@@ -16,22 +16,24 @@
 #include <tuple>
 #include <vector>
 
+#include "fmt/format.h"
+#include "fmt/ranges.h" // support printing of (nested) containers & tuples
+
 // TODO: export/import of trained values for w and b
 // TODO: make random distribution in neural_net.cpp a selectable meta parameter
 
 void print_help_message()
 {
-    std::cout << "Provide a 'case_name' as single argument, please.\n\n";
-    std::cout << "Remaining file names will be derived from 'case_name':\n\n";
-    std::cout << "  - 'case_name.cfg' -> config file incl. meta data.\n";
-    std::cout << "  - 'case_name_train.csv' -> training data.\n";
-    std::cout << "  - 'case_name_test.csv' -> test data.\n";
-    std::cout << "\n";
-    std::cout << "If case_name ends with '_validate', i.e. is "
-                 "'case_name_validate' then:\n\n";
-    std::cout << "  - 'case_name_validate.cfg' -> config file incl. meta data.\n";
-    std::cout << "  - 'case_name_train.csv' -> validation data.\n";
-    std::cout << "  - 'case_name_validate.csv' -> test data.\n\n";
+    fmt::println("Provide a 'case_name' as single argument, please.\n");
+    fmt::println("Remaining file names will be derived from 'case_name':\n");
+    fmt::println("  - 'case_name.cfg' -> config file incl. meta data.");
+    fmt::println("  - 'case_name_train.csv' -> training data.");
+    fmt::println("  - 'case_name_test.csv' -> test data.\n");
+    fmt::println("If case_name ends with '_validate', i.e. is "
+                 "'case_name_validate' then:\n");
+    fmt::println("  - 'case_name_validate.cfg' -> config file incl. meta data.");
+    fmt::println("  - 'case_name_train.csv' -> validation data.");
+    fmt::println("  - 'case_name_validate.csv' -> test data.\n");
 }
 
 std::tuple<std::string, std::string, std::string>
@@ -92,6 +94,11 @@ int main(int argc, char* argv[])
         std::string case_name{std::string(argv[1])};
         auto const [fn_cfg, fn_train, fn_test] = get_file_names(prefix, case_name);
 
+        fmt::println("\nData files:\n");
+        fmt::println("Config  : {}", fn_cfg);
+        fmt::println("Training: {}", fn_train);
+        fmt::println("Test    : {}\n", fn_test);
+
         ///////////////////////////////////////////////////////////////////////
         // read config, setup neural net and read training, target & test data
         ///////////////////////////////////////////////////////////////////////
@@ -114,13 +121,14 @@ int main(int argc, char* argv[])
         // print_f_data("test target data", td_test);
 
         if (case_name.contains("mnist")) {
-            // scale picture data, i.e. gray scale range from range 0..255 to 0.0..1.0
-            std::cout << "\nScaling mnist data\n\n";
+            // scale picture data, i.e. gray scale range
+            // from range 0 ... 255 to range 0.0 ... 1.0
+            fmt::println("Scaling mnist data\n");
             scale_data(fd_train, 1. / 255.);
             scale_data(fd_test, 1. / 255.);
         }
 
-        // std::cout << "neural_net nodes not yet activated." << std::endl;
+        // fmt::println("neural_net nodes not yet activated.");
         print_parameters("nn", nn);
         // print_nodes("nn", nn);
         // print_weights("nn", nn);
@@ -128,9 +136,9 @@ int main(int argc, char* argv[])
         ///////////////////////////////////////////////////////////////////////
         // train network
         ///////////////////////////////////////////////////////////////////////
-        std::cout << "\nStart training cycle...\n\n";
+        fmt::println("\nStart training cycle...\n");
         nn.train(fd_train, td_train, nn_meta);
-        std::cout << "\nStop training cycle...\n\n\n";
+        fmt::println("\nStop training cycle...\n\n");
 
         // print_nodes("nn", nn);
         // print_weights("nn", nn);
@@ -138,11 +146,11 @@ int main(int argc, char* argv[])
         ///////////////////////////////////////////////////////////////////////
         // run test data through trained network
         ///////////////////////////////////////////////////////////////////////
-        std::cout << "Prediction with trained network:\n";
+        fmt::println("Prediction with trained network:\n");
         nn.test(fd_test, td_test);
     }
     catch (std::exception& e) {
-        std::cout << "Exception: " << e.what() << std::endl;
+        fmt::println("Exception: ", e.what());
     }
 
     return 0;

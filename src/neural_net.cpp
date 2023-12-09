@@ -14,12 +14,6 @@
 std::random_device rd;
 std::mt19937 gen(rd());
 
-// uniform_real_distribution(from, to)
-// std::uniform_real_distribution<double> d_ran(0.0, 1.0);
-
-// normal_disribution(mean,stddev)
-std::normal_distribution<double> d_ran(0.0, 1.0);
-
 neural_net::neural_net(nn_structure_t structure_input) : m_structure{structure_input}
 {
     // set up neural network structure
@@ -59,21 +53,43 @@ neural_net::neural_net(nn_structure_t structure_input) : m_structure{structure_i
             layer[l].dLdw.resize(num_nodes[l]);
 
             // initialize weights, biases and gradients
+
+            // normal_disribution(mean,stddev) - for activation bias values
+            std::normal_distribution<double> d_ran0(0.0, 1.0);
+
+            // uniform_real_distribution(from, to)
+
+            // // Xavier weight initialization - for activation functions 1,2,3
+            // double divisor = std::sqrt(num_nodes[l - 1]);
+            // std::uniform_real_distribution<double> d_ran1(-1.0 / divisor, 1.0 /
+            // divisor);
+
+            // normalized Xavier weight initialization - for activation functions 1,2,3
+            double divisor = std::sqrt(num_nodes[l - 1] + num_nodes[l]);
+            std::uniform_real_distribution<double> d_ran1(-std::sqrt(6.0) / divisor,
+                                                          std::sqrt(6.0) / divisor);
+
+            // normal_disribution(mean,stddev) - for activation function 4,5 (reLU)
+            std::normal_distribution<double> d_ran2(0.0,
+                                                    2.0 / std::sqrt(num_nodes[l - 1]));
+
             std::size_t w_cnt{0};
             for (std::size_t to = 0; to < num_nodes[l]; ++to) {
 
-                layer[l].b[to] = d_ran(gen); // random initialization
+                layer[l].b[to] = d_ran0(gen);
                 layer[l].dLdb[to] = 0.0;
 
                 layer[l].w[to].resize(num_nodes[l - 1]);
                 layer[l].dLdw[to].resize(num_nodes[l - 1]);
                 for (std::size_t from = 0; from < num_nodes[l - 1]; ++from) {
-                    layer[l].w[to][from] = d_ran(gen); // random initialization
-                    // layer[l].w[to][from] =
-                    //     d_ran(gen) /
-                    //     std::sqrt(
-                    //         num_nodes[l - 1]); // random initialization with
-                    //         normalization
+                    if (m_structure.af_h <= af_t::tanhyp) {
+                        // for identity, sigmoid and tanhyp in hidden layers
+                        layer[l].w[to][from] = d_ran1(gen);
+                    }
+                    else {
+                        // for reLu variants in hidden layers
+                        layer[l].w[to][from] = d_ran2(gen);
+                    }
                     layer[l].dLdw[to][from] = 0.0;
                 }
                 w_cnt += num_nodes[l - 1];
@@ -277,58 +293,81 @@ void neural_net::train(f_data_t const& fd_train, f_data_t const& td_train,
 {
     // train the network using gradient descent
 
+    std::string const prefix1{"   "};
+    std::string const prefix2{"       "};
+
     // compatible number of lines for data and target values?
     std::size_t total_num_training_data_sets = fd_train.size();
     assert(total_num_training_data_sets == td_train.size());
-    std::cout << "total_num_training_data_sets = " << total_num_training_data_sets
-              << std::endl;
 
+    // core variables for iteration strategies
     std::uniform_int_distribution<> i_dist(0, total_num_training_data_sets - 1);
     std::size_t num_training_data_sets_batch;
-    std::size_t num_batch_iter{1}; // default, update for mini_batch only
+    std::size_t num_batch_iter;
     std::vector<std::size_t> index_vec;
 
-    if (m_data.upstr == update_strategy_t::mini_batch_update) {
+    switch (m_data.upstr) {
 
-        // limit mini_batch_size to total size of training data set
-        if (m_data.mini_batch_size <= total_num_training_data_sets) {
-            num_training_data_sets_batch = m_data.mini_batch_size;
-            // number of iterations for full epoch
+        case update_strategy_t::mini_batch_update:
+
+            // limit mini_batch_size to total size of training data set
+            if (m_data.mini_batch_size <= total_num_training_data_sets) {
+                num_training_data_sets_batch = m_data.mini_batch_size;
+            }
+            else {
+                // just in case the user required too large mini_batch_size
+                num_training_data_sets_batch = total_num_training_data_sets;
+            }
             num_batch_iter = total_num_training_data_sets / num_training_data_sets_batch;
-        }
-        else {
-            // just in case the user requires too large mini_batch_size
+            index_vec.resize(num_training_data_sets_batch);
+            // acutal random indices will be assigned in mini batch loop
+            break;
+
+        case update_strategy_t::immediate_update:
+            [[fallthrough]];
+        case update_strategy_t::full_batch_update:
+
             num_training_data_sets_batch = total_num_training_data_sets;
-        }
-        std::cout << "update strategy: mini batch,"
-                  << " batch size: " << num_training_data_sets_batch
-                  << ", number of batch iterations: " << num_batch_iter << "\n\n";
+            index_vec.resize(num_training_data_sets_batch);
+            for (std::size_t i = 0; i < num_training_data_sets_batch; ++i) {
+                index_vec[i] = i;
+            }
+            num_batch_iter = 1;
+            break;
 
-        index_vec.resize(num_training_data_sets_batch);
-        // acutal random indices will be assigned in mini batch loop
+        default:
+            std::unreachable();
     }
-    else {
 
-        if (m_data.upstr == update_strategy_t::immediate_update) {
-            std::cout << "update strategy: immediate update\n\n";
-        }
-        if (m_data.upstr == update_strategy_t::full_batch_update) {
-
-            std::cout << "update strategy: full batch update\n\n";
-        }
-        num_training_data_sets_batch = total_num_training_data_sets;
-        index_vec.resize(num_training_data_sets_batch);
-        for (std::size_t i = 0; i < num_training_data_sets_batch; ++i) {
-            index_vec[i] = i;
-        }
+    fmt::print("Update strategy:              ");
+    switch (m_data.upstr) {
+        case update_strategy_t::immediate_update:
+            fmt::println("immediate update");
+            break;
+        case update_strategy_t::mini_batch_update:
+            fmt::println("mini batch update");
+            break;
+        case update_strategy_t::full_batch_update:
+            fmt::println("full batch update");
+            break;
+        default:
+            std::unreachable();
     }
+    fmt::println("Number of training data sets: {}", total_num_training_data_sets);
+    fmt::println("Batch size                  : {}", num_training_data_sets_batch);
+    fmt::println("Number of batch iterations  : {}\n", num_batch_iter);
+
 
     double total_loss{0.0}, total_loss_old{0.0}; // total loss in respective epoch
     double total_loss_change_rate{0.0};
 
     for (size_t epoch = 1; epoch <= m_data.epochmax; ++epoch) {
 
+        // fmt::println("{}Epoch: {}", prefix1, epoch);
+
         if (m_data.upstr == update_strategy_t::full_batch_update) {
+            // fmt::println("{}full batch update: reset grad.", prefix1);
+
             reset_dLdw_and_dLdb_to_zero();
         }
 
@@ -339,20 +378,26 @@ void neural_net::train(f_data_t const& fd_train, f_data_t const& td_train,
 
             if (m_data.upstr == update_strategy_t::mini_batch_update) {
 
-                reset_dLdw_and_dLdb_to_zero();
-
                 // select the minibatch subset of samples
                 for (std::size_t i = 0; i < num_training_data_sets_batch; ++i) {
                     index_vec[i] = i_dist(gen);
                 }
-                // std::cout << "selected indices of batch : [ ";
+                // fmt::println("{}mini batch update: selected new batch of size {}",
+                //              prefix2, num_training_data_sets_batch);
+                // fmt::print("{}selected indices of batch : [ ", prefix2);
                 // for (std::size_t i = 0; i < num_training_data_sets_batch; ++i) {
-                //   if (i < num_training_data_sets_batch - 1) {
-                //     std::cout << index_vec[i] << ", ";
-                //   } else {
-                //     std::cout << index_vec[i] << " ]\n";
-                //   }
+                //     if (i < num_training_data_sets_batch - 1) {
+                //         fmt::print("{}, ", index_vec[i]);
+                //     }
+                //     else {
+                //         fmt::println("{} ]", index_vec[i]);
+                //     }
                 // }
+
+                // fmt::println("{}mini batch update: e:{}, mb:{}), reset grad.", prefix2,
+                //              epoch, mb_iter);
+
+                reset_dLdw_and_dLdb_to_zero();
             }
 
             // for each training pair in training batch do the learning cycle via
@@ -360,6 +405,10 @@ void neural_net::train(f_data_t const& fd_train, f_data_t const& td_train,
             for (std::size_t n = 0; n < num_training_data_sets_batch; ++n) {
 
                 if (m_data.upstr == update_strategy_t::immediate_update) {
+                    // fmt::println("{}immediate update: e:{}, mb:{}, n: {}), reset "
+                    //              "grad.",
+                    //              prefix2, epoch, mb_iter, n);
+
                     // online variant: update directly after each training pair
                     reset_dLdw_and_dLdb_to_zero();
                 }
@@ -375,14 +424,20 @@ void neural_net::train(f_data_t const& fd_train, f_data_t const& td_train,
                 backward_pass(input_vec, target_output_vec);
 
                 if (m_data.upstr == update_strategy_t::immediate_update) {
+                    // fmt::println("{}immediate update: e:{}, mb:{}, n: {}),"
+                    //              "update grad.",
+                    //              prefix2, epoch, mb_iter, n);
+
                     // online variant: update directly after each training pair
-                    // update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
                     update_w_and_b(m_data.learning_rate, 1);
                 }
 
             } // batch loop
 
             if (m_data.upstr == update_strategy_t::mini_batch_update) {
+                // fmt::println("{}mini batch update: e:{}, mb:{}), update grad.",
+                // prefix2, epoch, mb_iter);
+
                 // update after the corresponding mini-batch of training samples
                 update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
             }
@@ -390,7 +445,9 @@ void neural_net::train(f_data_t const& fd_train, f_data_t const& td_train,
         } // mini batch iteration
 
         if (m_data.upstr == update_strategy_t::full_batch_update) {
-            // offline variant: update after the full set of training samples
+            // fmt::println("{}full batch update: update gradient", prefix1);
+
+            // offline variant: update gradient after full set of training samples only
             update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
         }
 
@@ -440,8 +497,8 @@ bool is_classified_correctly(std::vector<double> const& output_vec,
     }
     else {
         // try this: maximum of output and target vector are at same index and output
-        // value at that index is larger than 0.5 (this is reasonable for a softmax output
-        // layer, but questionable for other modes)
+        // value at that index is larger than 0.5 (this is reasonable for a softmax
+        // output layer, but questionable for other modes)
 
         auto out_iter = std::max_element(output_vec.begin(), output_vec.end());
         auto out_idx = std::distance(output_vec.begin(), out_iter);
@@ -459,7 +516,9 @@ void neural_net::test(f_data_t const& fd_test, f_data_t const& td_test)
     // fmt::println("target test data: {}", fmt::join(td_test, ", "));
 
     std::size_t num_test_samples = fd_test.size();
-    fmt::println("target test data has {} samples.", num_test_samples);
+    std::string prefix{"    "};
+    fmt::println("{}Target test data has a total of {} samples.", prefix,
+                 num_test_samples);
 
     std::vector<double> output;
     std::size_t not_classified_correctly{0};
@@ -470,12 +529,16 @@ void neural_net::test(f_data_t const& fd_test, f_data_t const& td_test)
         //              fmt::join(td_test[cnt], ", "));
         bool classified_correctly = is_classified_correctly(output, td_test[cnt]);
         if (!classified_correctly) ++not_classified_correctly;
-        fmt::println("output: {:8.3},    target: {:1.1},    correctly classifed: {}",
-                     fmt::join(output, ", "), fmt::join(td_test[cnt], ", "),
-                     classified_correctly);
+        // fmt::println("output: {:8.3},    target: {:1.1},    correctly classifed:
+        // {}",
+        //              fmt::join(output, ", "), fmt::join(td_test[cnt], ", "),
+        //              classified_correctly);
     }
     double accuracy =
         double(num_test_samples - not_classified_correctly) / num_test_samples;
-    fmt::println("Accuracy: {:.2}", accuracy);
+    fmt::println("{}Correcly classified out of total samples: ({}/{}) => "
+                 "accuracy: {:.2}\n",
+                 prefix, num_test_samples - not_classified_correctly, num_test_samples,
+                 accuracy);
 
 } // test
