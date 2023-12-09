@@ -81,7 +81,7 @@ struct neural_net {
 
     std::size_t num_layers; // number of layers in neural_net:
                             // l == 0: input layer
-                            // (l > 1) && (l < num_layers - 1): hidden layer
+                            // (l > 0) && (l < num_layers - 1): hidden layer
                             // l == num_layers-1: output layer
 
     std::vector<std::size_t> num_nodes; // number of nodes in each layer
