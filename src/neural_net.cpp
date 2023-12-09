@@ -69,6 +69,11 @@ neural_net::neural_net(nn_structure_t structure_input) : m_structure{structure_i
                 layer[l].dLdw[to].resize(num_nodes[l - 1]);
                 for (std::size_t from = 0; from < num_nodes[l - 1]; ++from) {
                     layer[l].w[to][from] = d_ran(gen); // random initialization
+                    // layer[l].w[to][from] =
+                    //     d_ran(gen) /
+                    //     std::sqrt(
+                    //         num_nodes[l - 1]); // random initialization with
+                    //         normalization
                     layer[l].dLdw[to][from] = 0.0;
                 }
                 w_cnt += num_nodes[l - 1];
@@ -323,15 +328,19 @@ void neural_net::train(f_data_t const& fd_train, f_data_t const& td_train,
 
     for (size_t epoch = 1; epoch <= m_data.epochmax; ++epoch) {
 
-        if (m_data.upstr != update_strategy_t::immediate_update) {
+        if (m_data.upstr == update_strategy_t::full_batch_update) {
             reset_dLdw_and_dLdb_to_zero();
         }
+
         total_loss = 0.0;
 
         // mini batch iteration (num_batch_iter == 1 for most other cases)
         for (std::size_t mb_iter = 0; mb_iter < num_batch_iter; ++mb_iter) {
 
             if (m_data.upstr == update_strategy_t::mini_batch_update) {
+
+                reset_dLdw_and_dLdb_to_zero();
+
                 // select the minibatch subset of samples
                 for (std::size_t i = 0; i < num_training_data_sets_batch; ++i) {
                     index_vec[i] = i_dist(gen);
@@ -373,11 +382,15 @@ void neural_net::train(f_data_t const& fd_train, f_data_t const& td_train,
 
             } // batch loop
 
+            if (m_data.upstr == update_strategy_t::mini_batch_update) {
+                // update after the corresponding mini-batch of training samples
+                update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
+            }
+
         } // mini batch iteration
 
-        if (m_data.upstr != update_strategy_t::immediate_update) {
-            // offline variant: update after the corresponding batch of
-            // training samples
+        if (m_data.upstr == update_strategy_t::full_batch_update) {
+            // offline variant: update after the full set of training samples
             update_w_and_b(m_data.learning_rate, num_training_data_sets_batch);
         }
 
