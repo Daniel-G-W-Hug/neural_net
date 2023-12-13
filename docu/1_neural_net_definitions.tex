@@ -13,9 +13,9 @@ required.
 \end{figure}
 
 A neural net consists of $L$ layers with $n^l$ nodes in each layer $l=[0,L-1]$. For the
-input layer $(l=0)$ the nodes are simple input nodes, while for the remaining layers
-consist of perceptron nodes (see figure~\ref{fig:perceptron}). A perceptron with an
-arbitrary activation function looks like this:
+input layer $(l=0)$ the nodes are simple input nodes, while the remaining layers consist
+of perceptron nodes (see figure~\ref{fig:perceptron}). A perceptron with an arbitrary
+activation function looks like this:
 \begin{figure}[h] \centering \includegraphics[width=0.75\textwidth]{single_neuron}
     \caption{A node of a neural network with inputs, bias and activiation function.
     (Source: \url{https://towardsai.net})}
@@ -26,7 +26,7 @@ arbitrary activation function looks like this:
 \begin{enumerate}
     \item We use a training dataset $X$ consisting of input-output pairs $(\vec{x}_i,
     \vec{y}_i)$, where $\vec{x}_i$ is the input and $\vec{y}_i$ is the desired or target
-    output of the network on the input $\vec{x}_i$ ($\vec{y}_i$ is a label). The set of
+    output of the network on the input $\vec{x}_i$. $\vec{y}_i$ is a label. The set of
     input-output training pairs of size $N$ is denoted $X = \{(\vec{x}_1,\vec{y}_1),
     \dots, (\vec{x}_N,\vec{y}_N)\}$.
 
@@ -74,11 +74,11 @@ Following values are used to define the network:
     $\vec{y}_i$.
 \end{itemize}
 
-The goal of training is to minimize the loss function and thus to minimize the remaining
-error for a given set of training data.  A typical example of a loss function is the
-quadratic cost function (Mean Squared Error (MSE) with additional factor of $\frac{1}{2}$
-for easy calculation of its derivative). The total loss is an average of the $N$ partial
-losses $L_i$ for each training pair $(\vec{x}_i, \vec{y}_i)$ as shown in
+The goal of training is to minimize the loss function $L(X,\theta)$ and thus to minimize
+the remaining error for a given set of training data.  A typical example of a loss
+function is the quadratic cost function (Mean Squared Error (MSE) with additional factor
+of $\frac{1}{2}$ for easy calculation of its derivative). The total loss is an average of
+the $N$ partial losses $L_i$ for each training pair $(\vec{x}_i, \vec{y}_i)$ as shown in
 equation~(\ref{eq:mse_loss_func}), where the partial loss itself is a sum over the
 contributions of each component $t$ of the difference between the actual output vector of
 the network $\vec{a}^{L-1}_i$ and the intended output vector $\vec{y}_i$ for a given
@@ -138,14 +138,15 @@ biases. The approaches of gradient approximation are mainly used to reduce the
 computational effort. \\
 
 It is called an epoch, when the neural net has seen all available training data once
-during a training cycle. The training typically covers several hundred epochs for
+during a training cycle. The training typically covers many epochs for eventually
 minimizing the loss function. The actual value depends on the data set. \\
 
 The available data is normally split into training data, validation data, test data. A
 typical ratio could be 70:20:10. The training data set is used to learn the training
 parameters. The validation data is used for initially optimizing the meta parameters (e.g.
 learn rate, batch sizes, activation functions, etc.). The test data set is used to
-calculate the quality of the training as a result (precision, recall, accuracy). All
+calculate the quality of the training as a result (precision, recall, accuracy) and to
+make sure that the network generalizes beyond the training data it has seen. All
 subsets must of course be large enough to be representative for the full available data
 set or we might run into trouble due to biased data in the subsets. \\
 

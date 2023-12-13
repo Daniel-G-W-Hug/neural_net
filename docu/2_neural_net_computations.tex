@@ -9,7 +9,9 @@
         \item nodes per layer
         \item activation functions for hidden and output layers
     \end{itemize}
-    \item Initialize the weights $w$ and biases $b$ with random values.
+    \item Initialize the weights $w$ and biases $b$ with random values. Especially for
+    larger networks there are strategies to initialize the network with suitable values
+    that support fast learning.
     \item Read the training data and the corresponding labels.
 \end{itemize}
 
@@ -144,7 +146,7 @@ This leads to
     = w_{ft}^{l+1} f_h^\prime( z_f^l )
     \label{eq:dzlp1_dzl}
 \end{equation}
-because there only remains the one term of the sum related to the specific index we derive
+because there only remains one term of the sum related to the specific index we derive
 for. \\
 
 Inserting equation (\ref{eq:dzlp1_dzl}) into equation (\ref{eq:delta_hidden}) we get a
