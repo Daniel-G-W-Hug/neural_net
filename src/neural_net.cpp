@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <iostream>
 #include <numeric> // std::inner_product
+#include <utility> // std::unreachable()
 
 #include "fmt/format.h"
 #include "fmt/ranges.h" // support printing of (nested) containers & tuples
