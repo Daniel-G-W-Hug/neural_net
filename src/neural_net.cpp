@@ -56,23 +56,23 @@ neural_net::neural_net(nn_structure_t structure_input) : m_structure{structure_i
             // initialize weights, biases and gradients
 
             // normal_disribution(mean,stddev) - for activation bias values
-            std::normal_distribution<double> d_ran0(0.0, 1.0);
+            std::normal_distribution<nn_fp_t> d_ran0(0.0, 1.0);
 
             // uniform_real_distribution(from, to)
 
             // // Xavier weight initialization - for activation functions 1,2,3
-            // double divisor = std::sqrt(num_nodes[l - 1]);
-            // std::uniform_real_distribution<double> d_ran1(-1.0 / divisor, 1.0 /
+            // nn_fp_t divisor = std::sqrt(num_nodes[l - 1]);
+            // std::uniform_real_distribution<nn_fp_t> d_ran1(-1.0 / divisor, 1.0 /
             // divisor);
 
             // normalized Xavier weight initialization - for activation functions 1,2,3
-            double divisor = std::sqrt(num_nodes[l - 1] + num_nodes[l]);
-            std::uniform_real_distribution<double> d_ran1(-std::sqrt(6.0) / divisor,
-                                                          std::sqrt(6.0) / divisor);
+            nn_fp_t divisor = std::sqrt(num_nodes[l - 1] + num_nodes[l]);
+            std::uniform_real_distribution<nn_fp_t> d_ran1(-std::sqrt(6.0) / divisor,
+                                                           std::sqrt(6.0) / divisor);
 
             // normal_disribution(mean,stddev) - for activation function 4,5 (reLU)
-            std::normal_distribution<double> d_ran2(0.0,
-                                                    2.0 / std::sqrt(num_nodes[l - 1]));
+            std::normal_distribution<nn_fp_t> d_ran2(0.0,
+                                                     2.0 / std::sqrt(num_nodes[l - 1]));
 
             std::size_t w_cnt{0};
             for (std::size_t to = 0; to < num_nodes[l]; ++to) {
@@ -118,7 +118,7 @@ neural_net::neural_net(nn_structure_t structure_input) : m_structure{structure_i
 
 } // neural_net (ctor)
 
-void neural_net::set_w_and_b_fixed(double val)
+void neural_net::set_w_and_b_fixed(nn_fp_t val)
 {
 
     for (std::size_t l = 1; l < num_layers; ++l) {
@@ -131,7 +131,7 @@ void neural_net::set_w_and_b_fixed(double val)
     }
 } // set_w_and_b_fixed
 
-void neural_net::forward_pass(std::vector<double> const& input_vec)
+void neural_net::forward_pass(std::vector<nn_fp_t> const& input_vec)
 {
     // propagate the input data through the network
 
@@ -176,8 +176,8 @@ void neural_net::forward_pass(std::vector<double> const& input_vec)
 
 } // forward_pass
 
-std::vector<double>
-neural_net::forward_pass_with_output(std::vector<double> const& input_vec)
+std::vector<nn_fp_t>
+neural_net::forward_pass_with_output(std::vector<nn_fp_t> const& input_vec)
 {
 
     forward_pass(input_vec);
@@ -185,8 +185,8 @@ neural_net::forward_pass_with_output(std::vector<double> const& input_vec)
     return layer[num_layers - 1].a;
 } // forward_pass_with_output
 
-void neural_net::backward_pass(std::vector<double> const& input_vec,
-                               std::vector<double> const& output_target_vec)
+void neural_net::backward_pass(std::vector<nn_fp_t> const& input_vec,
+                               std::vector<nn_fp_t> const& output_target_vec)
 {
     // calculate backward pass for contribution to gradient vector based on the
     // given input and target output vectors
@@ -203,7 +203,7 @@ void neural_net::backward_pass(std::vector<double> const& input_vec,
         if (m_structure.lossf_af_f1 == lfaf_f1_t::MSE_sigmoid) {
             // additional multiplication with derivative of acitivation function required
 
-            std::vector<double> af1(num_nodes[l]);
+            std::vector<nn_fp_t> af1(num_nodes[l]);
             af1 = layer[l].af(layer[l].z, f_tag::f1);
 
             for (std::size_t to = 0; to < num_nodes[l]; ++to) {
@@ -219,7 +219,7 @@ void neural_net::backward_pass(std::vector<double> const& input_vec,
     // calculate deltas in hidden layers
     for (std::size_t l = num_layers - 2; l > 0; --l) {
 
-        std::vector<double> af1(num_nodes[l]);
+        std::vector<nn_fp_t> af1(num_nodes[l]);
         af1 = layer[l].af(layer[l].z, f_tag::f1);
 
         for (std::size_t from = 0; from < num_nodes[l]; ++from) {
@@ -256,12 +256,12 @@ void neural_net::reset_dLdw_and_dLdb_to_zero()
     }
 } // reset_dLdw_and_dLdb_to_zero
 
-void neural_net::update_w_and_b(double learning_rate, std::size_t num_samples)
+void neural_net::update_w_and_b(nn_fp_t learning_rate, std::size_t num_samples)
 {
     // update after backward_pass based on average accumulated gradient over
     // num_samples
 
-    double scale_fact = learning_rate / num_samples;
+    nn_fp_t scale_fact = learning_rate / num_samples;
 
     for (std::size_t l = 1; l < num_layers; ++l) {
 
@@ -274,7 +274,7 @@ void neural_net::update_w_and_b(double learning_rate, std::size_t num_samples)
     }
 } // update_w_and_b
 
-double neural_net::get_partial_loss(std::vector<double> const& output_target_vec)
+nn_fp_t neural_net::get_partial_loss(std::vector<nn_fp_t> const& output_target_vec)
 {
     //
     // REQUIRES:
@@ -359,8 +359,8 @@ void neural_net::train(f_data_t const& fd_train, f_data_t const& td_train,
     fmt::println("Number of batch iterations  : {}\n", num_batch_iter);
 
 
-    double total_loss{0.0}, total_loss_old{0.0}; // total loss in respective epoch
-    double total_loss_change_rate{0.0};
+    nn_fp_t total_loss{0.0}, total_loss_old{0.0}; // total loss in respective epoch
+    nn_fp_t total_loss_change_rate{0.0};
 
     for (size_t epoch = 1; epoch <= m_data.epochmax; ++epoch) {
 
@@ -415,8 +415,8 @@ void neural_net::train(f_data_t const& fd_train, f_data_t const& td_train,
                 }
 
                 // select the next training pair
-                std::vector<double> input_vec{fd_train[index_vec[n]]};
-                std::vector<double> target_output_vec{td_train[index_vec[n]]};
+                std::vector<nn_fp_t> input_vec{fd_train[index_vec[n]]};
+                std::vector<nn_fp_t> target_output_vec{td_train[index_vec[n]]};
 
                 forward_pass(input_vec);
                 total_loss +=
@@ -488,12 +488,12 @@ void neural_net::train(f_data_t const& fd_train, f_data_t const& td_train,
 } // train
 
 
-bool is_classified_correctly(std::vector<double> const& output_vec,
-                             std::vector<double> const& target_vec)
+bool is_classified_correctly(std::vector<nn_fp_t> const& output_vec,
+                             std::vector<nn_fp_t> const& target_vec)
 {
     if (output_vec.size() == 1) {
         // try this: delta^2 < 0.001 (arbitrarly chosen value!)
-        double delta = output_vec[0] - target_vec[0];
+        nn_fp_t delta = output_vec[0] - target_vec[0];
         return (delta * delta < 0.001);
     }
     else {
@@ -521,7 +521,7 @@ void neural_net::test(f_data_t const& fd_test, f_data_t const& td_test)
     fmt::println("{}Target test data has a total of {} samples.", prefix,
                  num_test_samples);
 
-    std::vector<double> output;
+    std::vector<nn_fp_t> output;
     std::size_t not_classified_correctly{0};
 
     for (std::size_t cnt = 0; cnt < num_test_samples; ++cnt) {
@@ -535,8 +535,8 @@ void neural_net::test(f_data_t const& fd_test, f_data_t const& td_test)
         //              fmt::join(output, ", "), fmt::join(td_test[cnt], ", "),
         //              classified_correctly);
     }
-    double accuracy =
-        double(num_test_samples - not_classified_correctly) / num_test_samples;
+    nn_fp_t accuracy =
+        nn_fp_t(num_test_samples - not_classified_correctly) / num_test_samples;
     fmt::println("{}Correcly classified out of total samples: ({}/{}) => "
                  "accuracy: {:.2}\n",
                  prefix, num_test_samples - not_classified_correctly, num_test_samples,

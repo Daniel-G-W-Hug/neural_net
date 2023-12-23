@@ -9,8 +9,8 @@
 #include <vector>
 
 // training data comes in csv files organized in lines with constant number of
-// integer or double values stored in f_data_t
-using f_data_t = std::vector<std::vector<double>>;
+// integer or nn_fp_t values stored in f_data_t
+using f_data_t = std::vector<std::vector<nn_fp_t>>;
 
 enum class update_strategy_t {
     immediate_update = 1,
@@ -35,11 +35,11 @@ struct nn_training_meta_data_t {
     std::size_t epochmax;          // max. number of iterations over the whole data set
     std::size_t epoch_output_skip; // output if epoch%epoch_output_skip == 0
 
-    double learning_rate;                 // chosen learning rate for gradient descent
-    double min_target_loss;               // minimum loss in training to stop prescribed
-                                          // iteration, even if epoch < epochmax
-    double min_relative_loss_change_rate; // stop iteration, if loss change
-                                          // becomes too small between epochs
+    nn_fp_t learning_rate;                 // chosen learning rate for gradient descent
+    nn_fp_t min_target_loss;               // minimum loss in training to stop prescribed
+                                           // iteration, even if epoch < epochmax
+    nn_fp_t min_relative_loss_change_rate; // stop iteration, if loss change
+                                           // becomes too small between epochs
 
     update_strategy_t upstr;     // update strategy for gradient descent
     std::size_t mini_batch_size; // number of training pairs for mini batch
@@ -50,23 +50,23 @@ struct nn_layer_t {
     // training is done by given pairs (x, y); x and y can be vectors
     // in each layer l=0..num_layers-1 there are num_nodes[l] node entries
 
-    std::vector<double> z; // input side of nodes
+    std::vector<nn_fp_t> z; // input side of nodes
     // either gets direct input (for input layer)
     // or gets weighted sum of inputs of previous layer + bias
     // z[to] = sum_from( layer[l].w[to][from]*.layer[l-1].a[from] ) + b[to]
 
-    std::vector<double> b;    // bias value of nodes
-    std::vector<double> dLdb; // gradient of bias of nodes
+    std::vector<nn_fp_t> b;    // bias value of nodes
+    std::vector<nn_fp_t> dLdb; // gradient of bias of nodes
 
-    std::vector<double> a; // output side of nodes (=activation)
-                           // gets its value after applying the
-                           // activation function a = af(z)
+    std::vector<nn_fp_t> a; // output side of nodes (=activation)
+                            // gets its value after applying the
+                            // activation function a = af(z)
 
-    std::vector<double> delta; // storage for backpropagation
+    std::vector<nn_fp_t> delta; // storage for backpropagation
 
     af_ptr_t af; // ptr to activation function
 
-    using weight_matrix_t = std::vector<std::vector<double>>;
+    using weight_matrix_t = std::vector<std::vector<nn_fp_t>>;
     weight_matrix_t w;    // weight matrix
     weight_matrix_t dLdw; // delta of loss function L depending on weights w
                           // w[to_node in l][from_node in l-1]
@@ -95,17 +95,17 @@ struct neural_net {
     lf_ptr_t lossf; // ptr to loss function
 
     neural_net(nn_structure_t structure_input);
-    void set_w_and_b_fixed(double val);
+    void set_w_and_b_fixed(nn_fp_t val);
 
-    void forward_pass(std::vector<double> const& input_vec);
-    std::vector<double> forward_pass_with_output(std::vector<double> const& input_vec);
+    void forward_pass(std::vector<nn_fp_t> const& input_vec);
+    std::vector<nn_fp_t> forward_pass_with_output(std::vector<nn_fp_t> const& input_vec);
 
-    void backward_pass(std::vector<double> const& input_vec,
-                       std::vector<double> const& target_vec);
+    void backward_pass(std::vector<nn_fp_t> const& input_vec,
+                       std::vector<nn_fp_t> const& target_vec);
 
     void reset_dLdw_and_dLdb_to_zero();
-    void update_w_and_b(double learn_rate, std::size_t num_samples);
-    double get_partial_loss(std::vector<double> const& target_vec);
+    void update_w_and_b(nn_fp_t learn_rate, std::size_t num_samples);
+    nn_fp_t get_partial_loss(std::vector<nn_fp_t> const& target_vec);
 
     void train(f_data_t const& fd_train, f_data_t const& td_train,
                nn_training_meta_data_t m_data);

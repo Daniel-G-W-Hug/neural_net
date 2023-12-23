@@ -8,11 +8,11 @@
 #include <utility> // std::unreachable()
 
 // activation functions
-std::vector<double> identity(std::vector<double> const& x, f_tag tag)
+std::vector<nn_fp_t> identity(std::vector<nn_fp_t> const& x, f_tag tag)
 {
 
     std::size_t dim = x.size();
-    std::vector<double> y(dim);
+    std::vector<nn_fp_t> y(dim);
 
     switch (tag) {
 
@@ -32,11 +32,11 @@ std::vector<double> identity(std::vector<double> const& x, f_tag tag)
     return y;
 }
 
-std::vector<double> sigmoid(std::vector<double> const& x, f_tag tag)
+std::vector<nn_fp_t> sigmoid(std::vector<nn_fp_t> const& x, f_tag tag)
 {
 
     std::size_t dim = x.size();
-    std::vector<double> y(dim);
+    std::vector<nn_fp_t> y(dim);
 
     switch (tag) {
 
@@ -49,7 +49,7 @@ std::vector<double> sigmoid(std::vector<double> const& x, f_tag tag)
         case f_tag::f1:
 
             for (std::size_t n = 0; n < dim; ++n) {
-                double val = 1.0 / (1.0 + exp(-x[n]));
+                nn_fp_t val = 1.0 / (1.0 + exp(-x[n]));
                 y[n] = val * (1.0 - val);
             }
             break;
@@ -58,11 +58,11 @@ std::vector<double> sigmoid(std::vector<double> const& x, f_tag tag)
     return y;
 }
 
-std::vector<double> tanhyp(std::vector<double> const& x, f_tag tag)
+std::vector<nn_fp_t> tanhyp(std::vector<nn_fp_t> const& x, f_tag tag)
 {
 
     std::size_t dim = x.size();
-    std::vector<double> y(dim);
+    std::vector<nn_fp_t> y(dim);
 
     switch (tag) {
 
@@ -76,7 +76,7 @@ std::vector<double> tanhyp(std::vector<double> const& x, f_tag tag)
         case f_tag::f1:
 
             for (std::size_t n = 0; n < dim; ++n) {
-                double val = 2.0 / (1.0 + exp(-2.0 * x[n])) - 1.0;
+                nn_fp_t val = 2.0 / (1.0 + exp(-2.0 * x[n])) - 1.0;
                 y[n] = 1.0 - val * val;
             }
             break;
@@ -85,11 +85,11 @@ std::vector<double> tanhyp(std::vector<double> const& x, f_tag tag)
     return y;
 }
 
-std::vector<double> reLU(std::vector<double> const& x, f_tag tag)
+std::vector<nn_fp_t> reLU(std::vector<nn_fp_t> const& x, f_tag tag)
 {
 
     std::size_t dim = x.size();
-    std::vector<double> y(dim);
+    std::vector<nn_fp_t> y(dim);
 
     switch (tag) {
 
@@ -111,11 +111,11 @@ std::vector<double> reLU(std::vector<double> const& x, f_tag tag)
     return y;
 }
 
-std::vector<double> leaky_reLU(std::vector<double> const& x, f_tag tag)
+std::vector<nn_fp_t> leaky_reLU(std::vector<nn_fp_t> const& x, f_tag tag)
 {
 
     std::size_t dim = x.size();
-    std::vector<double> y(dim);
+    std::vector<nn_fp_t> y(dim);
 
     switch (tag) {
 
@@ -137,17 +137,17 @@ std::vector<double> leaky_reLU(std::vector<double> const& x, f_tag tag)
     return y;
 }
 
-std::vector<double> softmax(std::vector<double> const& x, f_tag tag)
+std::vector<nn_fp_t> softmax(std::vector<nn_fp_t> const& x, f_tag tag)
 {
 
     std::size_t dim = x.size();
-    std::vector<double> y(dim);
+    std::vector<nn_fp_t> y(dim);
 
     // use stable version of softmax by normalizing input elements
     // (only for numeric stability, w/o effect on derivative calculation in loss function)
-    double d = -(*std::max_element(x.begin(), x.end()));
+    nn_fp_t d = -(*std::max_element(x.begin(), x.end()));
 
-    double denom{0.0};
+    nn_fp_t denom{0.0};
 
     switch (tag) {
 
@@ -174,12 +174,12 @@ std::vector<double> softmax(std::vector<double> const& x, f_tag tag)
     return y;
 }
 
-double MSE(std::vector<double> const& output,
-           std::vector<double> const& target_output_vec)
+nn_fp_t MSE(std::vector<nn_fp_t> const& output,
+            std::vector<nn_fp_t> const& target_output_vec)
 {
     // MSE: Mean Squared Error (with factor 0.5 for simple derivative)
     std::size_t dim = output.size();
-    double partial_loss{0.0};
+    nn_fp_t partial_loss{0.0};
     for (std::size_t to = 0; to < dim; ++to) {
         partial_loss += std::pow(output[to] - target_output_vec[to], 2.0);
     }
@@ -187,12 +187,13 @@ double MSE(std::vector<double> const& output,
     return 0.5 * partial_loss;
 }
 
-double CE(std::vector<double> const& output, std::vector<double> const& target_output_vec)
+nn_fp_t CE(std::vector<nn_fp_t> const& output,
+           std::vector<nn_fp_t> const& target_output_vec)
 {
     // CROSS_ENTROPY (CE): CE = - sum_t(target_output[t] * log(output[t])
 
     std::size_t dim = output.size();
-    double partial_loss{0.0};
+    nn_fp_t partial_loss{0.0};
     for (std::size_t to = 0; to < dim; ++to) {
         partial_loss -= target_output_vec[to] * std::log(output[to]);
     }
@@ -201,12 +202,12 @@ double CE(std::vector<double> const& output, std::vector<double> const& target_o
 }
 
 
-std::vector<double> MSE_identity_f1(std::vector<double> const& output,
-                                    std::vector<double> const& target_output_vec)
+std::vector<nn_fp_t> MSE_identity_f1(std::vector<nn_fp_t> const& output,
+                                     std::vector<nn_fp_t> const& target_output_vec)
 {
 
     std::size_t dim = output.size();
-    std::vector<double> f1(dim);
+    std::vector<nn_fp_t> f1(dim);
     for (std::size_t to = 0; to < dim; ++to) {
         f1[to] = output[to] - target_output_vec[to];
     }
@@ -214,12 +215,12 @@ std::vector<double> MSE_identity_f1(std::vector<double> const& output,
     return f1;
 }
 
-std::vector<double> CE_softmax_f1(std::vector<double> const& output,
-                                  std::vector<double> const& target_output_vec)
+std::vector<nn_fp_t> CE_softmax_f1(std::vector<nn_fp_t> const& output,
+                                   std::vector<nn_fp_t> const& target_output_vec)
 {
 
     std::size_t dim = output.size();
-    std::vector<double> f1(dim);
+    std::vector<nn_fp_t> f1(dim);
     for (std::size_t to = 0; to < dim; ++to) {
         f1[to] = output[to] - target_output_vec[to];
     }

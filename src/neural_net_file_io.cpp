@@ -47,7 +47,7 @@ std::tuple<nn_structure_t, nn_training_meta_data_t> read_cfg(std::string const& 
     std::stringstream iss;
 
     int int_in;
-    double double_in;
+    nn_fp_t nn_fp_t_in;
     char ch_in;
 
     if (ifs.is_open()) {
@@ -136,9 +136,9 @@ std::tuple<nn_structure_t, nn_training_meta_data_t> read_cfg(std::string const& 
 
         // read learning_rate
         std::tie(line_no, iss) = get_next_line(ifs);
-        iss >> double_in;
-        if (double_in > 0.0) {
-            m_data.learning_rate = double_in;
+        iss >> nn_fp_t_in;
+        if (nn_fp_t_in > 0.0) {
+            m_data.learning_rate = nn_fp_t_in;
         }
         else {
             throw std::runtime_error("learning rate must be a positive value. Line " +
@@ -147,9 +147,9 @@ std::tuple<nn_structure_t, nn_training_meta_data_t> read_cfg(std::string const& 
 
         // read min_target_loss
         std::tie(line_no, iss) = get_next_line(ifs);
-        iss >> double_in;
-        if (double_in > 0.0) {
-            m_data.min_target_loss = double_in;
+        iss >> nn_fp_t_in;
+        if (nn_fp_t_in > 0.0) {
+            m_data.min_target_loss = nn_fp_t_in;
         }
         else {
             throw std::runtime_error("min_target_loss must be a positive value. Line " +
@@ -158,9 +158,9 @@ std::tuple<nn_structure_t, nn_training_meta_data_t> read_cfg(std::string const& 
 
         // read min_relative_loss_change_rate
         std::tie(line_no, iss) = get_next_line(ifs);
-        iss >> double_in;
-        if (double_in > 0.0) {
-            m_data.min_relative_loss_change_rate = double_in;
+        iss >> nn_fp_t_in;
+        if (nn_fp_t_in > 0.0) {
+            m_data.min_relative_loss_change_rate = nn_fp_t_in;
         }
         else {
             throw std::runtime_error(
@@ -216,7 +216,7 @@ f_data_t read_f_data(std::string const& fname, std::size_t assert_size)
 
         // for reading the file
         std::string line;
-        double in;
+        nn_fp_t in;
         char ch;
         std::size_t line_number{0};
 
@@ -234,10 +234,10 @@ f_data_t read_f_data(std::string const& fname, std::size_t assert_size)
 
             ++line_number;
 
-            std::vector<double> line_data;
+            std::vector<nn_fp_t> line_data;
 
             while (iss >> in) {
-                // read double values as long as available
+                // read nn_fp_t values as long as available
                 line_data.push_back(in);
                 iss >> ch; // read space or comma
             }
@@ -333,7 +333,7 @@ std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname,
 
         // for reading the file
         std::string line;
-        double in;
+        nn_fp_t in;
         char ch;
         std::size_t line_number{0};
         std::size_t idx_min{num_output_nodes}; // initialize for range search
@@ -353,10 +353,10 @@ std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname,
 
             ++line_number;
 
-            std::vector<double> line_data;
+            std::vector<nn_fp_t> line_data;
 
             while (iss >> in) {
-                // read double values as long as available
+                // read nn_fp_t values as long as available
                 line_data.push_back(in);
                 iss >> ch; // read space or comma
             }
@@ -401,7 +401,7 @@ std::tuple<f_data_t, f_data_t> read_mnist_data(std::string const& fname,
                 idx_max = idx;
             }
 
-            std::vector<double> tmp(num_output_nodes, 0.0);
+            std::vector<nn_fp_t> tmp(num_output_nodes, 0.0);
             if (num_output_nodes > 1) {
                 tmp[idx] = 1.0; // Use target value from 1st column of input file as index
                                 // for ground truth value 1.0. Other values are set to 0.0

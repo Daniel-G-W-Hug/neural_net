@@ -63,11 +63,11 @@ get_file_names(std::string const& prefix, std::string const& case_name)
     return std::make_tuple(fn_cfg, fn_train, fn_test);
 }
 
-void scale_data(f_data_t& data, double scale)
+void scale_data(f_data_t& data, nn_fp_t scale)
 {
     for (std::size_t cnt = 0; cnt < data.size(); ++cnt) {
         for_each(data[cnt].begin(), data[cnt].end(),
-                 [&scale](double& elem) { elem *= scale; });
+                 [&scale](nn_fp_t& elem) { elem *= scale; });
     }
 }
 
